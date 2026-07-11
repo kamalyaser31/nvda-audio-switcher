@@ -18,7 +18,7 @@ msgstr ""
 
 #: addon\globalPlugins\audio_switcher\__init__.py:89
 msgid "speaker"
-msgstr "مكبر الصوت"
+msgstr "السماعة"
 
 #: addon\globalPlugins\audio_switcher\__init__.py:92
 msgid "mic"
@@ -27,34 +27,34 @@ msgstr "الميكروفون"
 #. Translators: short message when the requested device slot is empty.
 #: addon\globalPlugins\audio_switcher\__init__.py:98
 msgid "Not set"
-msgstr "غير معين"
+msgstr "غير مهيأ"
 
 #. Translators: short message when the configured device is unavailable.
 #: addon\globalPlugins\audio_switcher\__init__.py:133
 msgid "Not found"
-msgstr "غير موجود"
+msgstr "تعذر العثور على الجهاز"
 
 #. Translators: short message when a default audio device slot is selected.
 #: addon\globalPlugins\audio_switcher\__init__.py:154
 #, python-brace-format
 msgid "Done: {deviceType} {slot}"
-msgstr "تم: {deviceType} {slot}"
+msgstr "تم تعيين: {deviceType} {slot}"
 
 #. Translators: short message when setting default device fails.
 #: addon\globalPlugins\audio_switcher\__init__.py:157
 msgid "Failed to set device"
-msgstr "فشل تعيين الجهاز"
+msgstr "تعذر تفعيل الجهاز"
 
 #. Translators: short message announcing the current default speaker.
 #: addon\globalPlugins\audio_switcher\__init__.py:165
 #, python-brace-format
 msgid "Speaker: {device}"
-msgstr "مكبر الصوت: {device}"
+msgstr "السماعة: {device}"
 
 #. Translators: short message when there is no default speaker.
 #: addon\globalPlugins\audio_switcher\__init__.py:168
 msgid "No speaker"
-msgstr "لا يوجد مكبر صوت"
+msgstr "لا توجد سماعة"
 
 #. Translators: short message announcing the current default microphone.
 #: addon\globalPlugins\audio_switcher\__init__.py:172
@@ -82,31 +82,31 @@ msgstr "(غير متصل)"
 
 #: addon\globalPlugins\audio_switcher\__init__.py:234
 msgid "&Speaker 1:"
-msgstr "&مكبر الصوت 1:"
+msgstr "&السماعة الأولى:"
 
 #: addon\globalPlugins\audio_switcher\__init__.py:242
 msgid "S&peaker 2:"
-msgstr "م&كبر الصوت 2:"
+msgstr "ا&لسماعة الثانية:"
 
 #: addon\globalPlugins\audio_switcher\__init__.py:250
 msgid "Sp&eaker 3:"
-msgstr "مك&بر الصوت 3:"
+msgstr "الس&ماعة الثالثة:"
 
 #: addon\globalPlugins\audio_switcher\__init__.py:258
 msgid "&Microphone 1:"
-msgstr "&الميكروفون 1:"
+msgstr "&الميكروفون الأول:"
 
 #: addon\globalPlugins\audio_switcher\__init__.py:266
 msgid "M&icrophone 2:"
-msgstr "ا&لميكروفون 2:"
+msgstr "ا&لميكروفون الثاني:"
 
 #: addon\globalPlugins\audio_switcher\__init__.py:274
 msgid "Mi&crophone 3:"
-msgstr "الم&يكروفون 3:"
+msgstr "الم&يكروفون الثالث:"
 
 #: addon\globalPlugins\audio_switcher\__init__.py:282
 msgid "Beep and Speech"
-msgstr "نغمة ونطق"
+msgstr "صافرة ونطق"
 
 #: addon\globalPlugins\audio_switcher\__init__.py:283
 msgid "Speech Only"
@@ -114,7 +114,7 @@ msgstr "نطق فقط"
 
 #: addon\globalPlugins\audio_switcher\__init__.py:284
 msgid "Beep Only"
-msgstr "نغمة فقط"
+msgstr "صافرة فقط"
 
 #: addon\globalPlugins\audio_switcher\__init__.py:285
 msgid "None"
@@ -122,42 +122,42 @@ msgstr "بلا"
 
 #: addon\globalPlugins\audio_switcher\__init__.py:288
 msgid "Feedback &Type:"
-msgstr "&نوع التغذية الراجعة:"
+msgstr "&أسلوب التنبيه:"
 
 #. Translators: description in Input Gestures dialog.
 #: addon\globalPlugins\audio_switcher\__init__.py:329
 msgid "Set speaker 1 as default."
-msgstr "تعيين مكبر الصوت 1 كافتراضي."
+msgstr "تعيين السماعة الأولى كافتراضية."
 
 #. Translators: description in Input Gestures dialog.
 #: addon\globalPlugins\audio_switcher\__init__.py:336
 msgid "Set speaker 2 as default."
-msgstr "تعيين مكبر الصوت 2 كافتراضي."
+msgstr "تعيين السماعة الثانية كافتراضية."
 
 #. Translators: description in Input Gestures dialog.
 #: addon\globalPlugins\audio_switcher\__init__.py:343
 msgid "Set speaker 3 as default."
-msgstr "تعيين مكبر الصوت 3 كافتراضي."
+msgstr "تعيين السماعة الثالثة كافتراضية."
 
 #. Translators: description in Input Gestures dialog.
 #: addon\globalPlugins\audio_switcher\__init__.py:350
 msgid "Set microphone 1 as default."
-msgstr "تعيين الميكروفون 1 كافتراضي."
+msgstr "تعيين الميكروفون الأول كافتراضي."
 
 #. Translators: description in Input Gestures dialog.
 #: addon\globalPlugins\audio_switcher\__init__.py:357
 msgid "Set microphone 2 as default."
-msgstr "تعيين الميكروفون 2 كافتراضي."
+msgstr "تعيين الميكروفون الثاني كافتراضي."
 
 #. Translators: description in Input Gestures dialog.
 #: addon\globalPlugins\audio_switcher\__init__.py:364
 msgid "Set microphone 3 as default."
-msgstr "تعيين الميكروفون 3 كافتراضي."
+msgstr "تعيين الميكروفون الثالث كافتراضي."
 
 #. Translators: description in Input Gestures dialog.
 #: addon\globalPlugins\audio_switcher\__init__.py:371
 msgid "Announce current default speaker."
-msgstr "نطق مكبر الصوت الافتراضي الحالي."
+msgstr "نطق السماعة الافتراضية الحالية."
 
 #. Translators: description in Input Gestures dialog.
 #: addon\globalPlugins\audio_switcher\__init__.py:378
@@ -167,10 +167,8 @@ msgstr "نطق الميكروفون الافتراضي الحالي."
 #. Add-on description
 #. Translators: Long description to be shown for this add-on on add-on information from add-on store
 #: buildVars.py:23
-msgid ""
-"Sets one of three configured speakers or microphones as default and "
-"announces current defaults."
-msgstr "تعيين أحد مكبرات الصوت أو الميكروفونات الثلاثة المهيأة كجهاز افتراضي ونطق الأجهزة الافتراضية الحالية."
+msgid "Sets one of three configured speakers or microphones as default and announces current defaults."
+msgstr "تعيين إحدى السماعات أو الميكروفونات الثلاثة المهيأة كجهاز افتراضي ونطق الأجهزة الافتراضية الحالية."
 
 #. Brief changelog for this version
 #. Translators: what's new content for the add-on version to be shown in the add-on store
