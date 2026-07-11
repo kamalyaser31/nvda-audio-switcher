@@ -1,6 +1,10 @@
 # Audio Switcher
 
-Audio Switcher is an NVDA add-on for quickly setting configured Windows audio devices as default.
+• Author: Kamal Yaser
+• Version: 2026.4
+• Compatibility: NVDA 2024.1 and later
+
+Audio Switcher is an NVDA add-on for quickly setting configured Windows audio devices as default. It is designed to be simple and lightweight, avoiding the complexity of other audio control add-ons by focusing solely on quick and reliable device switching.
 
 ## Features
 
@@ -9,6 +13,8 @@ Audio Switcher is an NVDA add-on for quickly setting configured Windows audio de
 - Announce the current default speaker.
 - Announce the current default microphone.
 - Optional feedback: beep and speech, speech only, beep only, or none.
+- Unique hardware ID matching to prevent conflicts between devices with identical names.
+- Disconnected configured devices are preserved and labeled as `(disconnected)` in the settings panel.
 
 ## Settings
 
@@ -41,18 +47,5 @@ Available actions:
 - Announce current default speaker
 - Announce current default microphone
 
-## Messages
 
-- `Done: speaker 1`
-- `Done: mic 1`
-- `Not set`
-- `Not found`
-- `Speaker: device name`
-- `Mic: device name`
-- `No speaker`
-- `No mic`
 
-## Requirements
-
-- NVDA 2024.1 or later
-- Windows audio devices supported by the Windows Core Audio API

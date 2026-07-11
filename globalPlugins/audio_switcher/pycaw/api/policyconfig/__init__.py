@@ -2,8 +2,8 @@ from ctypes import HRESULT, POINTER
 from ctypes.wintypes import BOOL, DWORD, LPCWSTR
 from comtypes import COMMETHOD, GUID, IUnknown
 
-from ..mmdeviceapi import PROPERTYKEY
-from ..mmdeviceapi.depend import PROPVARIANT
+from ...api.mmdeviceapi import PROPERTYKEY
+from ...api.mmdeviceapi.depend import PROPVARIANT
 
 
 class IPolicyConfig(IUnknown):
