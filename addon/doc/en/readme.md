@@ -1,7 +1,7 @@
 # Audio Switcher
 
 • Author: Kamal Yaser
-• Version: 2026.4
+• Version: 2026.1
 • Compatibility: NVDA 2024.1 and later
 
 Audio Switcher is an NVDA add-on for quickly setting configured Windows audio devices as default. It is designed to be simple and lightweight, avoiding the complexity of other audio control add-ons by focusing solely on quick and reliable device switching.
