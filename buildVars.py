@@ -29,8 +29,9 @@ addon_info = AddonInfo(
 	# Brief changelog for this version
 	# Translators: what's new content for the add-on version to be shown in the add-on store
 	addon_changelog=_(
-		"Added a quick dialog for independently selecting the default speaker and microphone, "
-		"and limited device lists to connected devices."
+		"Added a refreshable quick device dialog with preserved selections, explicit empty states, "
+		"duplicate-name labels, connected-only lists, and combined default-device announcement. "
+		"Improved device enumeration and prevented ambiguous legacy names from selecting the wrong device."
 	),
 	# Author(s)
 	addon_author="Kamal Yaser",

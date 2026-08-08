@@ -8,10 +8,10 @@ import comtypes.client
 # Set comtypes code cache directory to a temporary location to avoid permission issues
 try:
 	temp_cache_dir = os.path.join(tempfile.gettempdir(), "nvda_comtypes_cache")
-	if not os.path.exists(temp_cache_dir):
-		os.makedirs(temp_cache_dir)
+	os.makedirs(temp_cache_dir, exist_ok=True)
 	comtypes.client.gen_dir = temp_cache_dir
-except Exception:
+except OSError as error:
+	logging.warning("Unable to prepare the comtypes cache: %s", error)
 	comtypes.client.gen_dir = None
 
 import wx
@@ -48,6 +48,12 @@ def parseDeviceConfig(value):
 	return "", value
 
 
+def _getActiveEndpoints(flow):
+	enumerator = AudioUtilities.GetDeviceEnumerator()
+	endpoints = enumerator.EnumAudioEndpoints(flow, DEVICE_STATE.ACTIVE.value)
+	return endpoints, endpoints.GetCount()
+
+
 def getActiveDevices(render=True):
 	"""Returns a list of friendly names of active audio devices using pycaw.
 	render=True for playback devices, render=False for capture devices.
@@ -55,17 +61,46 @@ def getActiveDevices(render=True):
 	devices = []
 	flow = EDataFlow.eRender.value if render else EDataFlow.eCapture.value
 	try:
-		enumerator = AudioUtilities.GetDeviceEnumerator()
-		endpoints = enumerator.EnumAudioEndpoints(flow, DEVICE_STATE.ACTIVE.value)
-		count = endpoints.GetCount()
-		for i in range(count):
-			item = endpoints.Item(i)
+		endpoints, count = _getActiveEndpoints(flow)
+	except (COMError, OSError) as error:
+		logging.error("Error enumerating audio devices: %s", error)
+		return devices
+
+	for index in range(count):
+		try:
+			item = endpoints.Item(index)
 			device = AudioUtilities.CreateDevice(item)
 			if device:
 				devices.append((device.id, device.FriendlyName))
-	except (COMError, OSError) as e:
-		logging.error(f"Error enumerating audio devices: {e}")
+		except (COMError, OSError) as error:
+			logging.error("Error reading audio device %s: %s", index, error)
 	return devices
+
+
+def getDisambiguatedDeviceNames(devices):
+	"""Number duplicate friendly names while preserving device order."""
+	nameCounts = {}
+	for _deviceId, name in devices:
+		nameKey = name.casefold()
+		nameCounts[nameKey] = nameCounts.get(nameKey, 0) + 1
+
+	nameIndexes = {}
+	displayNames = []
+	for _deviceId, name in devices:
+		nameKey = name.casefold()
+		if nameCounts[nameKey] == 1:
+			displayNames.append(name)
+			continue
+		nameIndexes[nameKey] = nameIndexes.get(nameKey, 0) + 1
+		displayNames.append(f"{name} ({nameIndexes[nameKey]})")
+	return displayNames
+
+
+def getDeviceSelectionIndex(devices, deviceId):
+	for index, (candidateId, _name) in enumerate(devices, start=1):
+		if candidateId == deviceId:
+			return index
+	return 0
 
 
 def getDefaultDeviceInfo(render=True):
@@ -116,16 +151,30 @@ def provideFeedback(successMessages, failureMessages=()):
 		ui.message("; ".join(spokenMessages))
 
 
+def _getOnlyDeviceId(deviceIds):
+	return deviceIds[0] if len(deviceIds) == 1 else None
+
+
 def findMatchingDeviceId(activeDevices, targetId, targetName):
 	if targetId:
 		for deviceId, _name in activeDevices:
 			if deviceId == targetId:
 				return deviceId
-	if targetName:
-		for deviceId, name in activeDevices:
-			if targetName.lower() in name.lower():
-				return deviceId
-	return None
+	if not targetName:
+		return None
+	targetNameKey = targetName.casefold()
+	exactMatch = _getOnlyDeviceId([
+		deviceId
+		for deviceId, name in activeDevices
+		if name.casefold() == targetNameKey
+	])
+	if exactMatch:
+		return exactMatch
+	return _getOnlyDeviceId([
+		deviceId
+		for deviceId, name in activeDevices
+		if targetNameKey in name.casefold()
+	])
 
 
 def setConfiguredDevice(render=True, slot=1):
@@ -165,22 +214,31 @@ def setConfiguredDevice(render=True, slot=1):
 		provideFeedback([], [_("Failed to set device")])
 
 
-def announceDefaultDevice(render=True):
+def getDefaultDeviceMessage(render=True):
 	currentName = getDefaultDeviceFriendlyName(render)
 	if render:
 		if currentName:
 			# Translators: short message announcing the current default speaker.
-			ui.message(_("Speaker: {device}").format(device=currentName))
-		else:
-			# Translators: short message when there is no default speaker.
-			ui.message(_("No speaker"))
-	else:
-		if currentName:
-			# Translators: short message announcing the current default microphone.
-			ui.message(_("Mic: {device}").format(device=currentName))
-		else:
-			# Translators: short message when there is no default microphone.
-			ui.message(_("No mic"))
+			return _("Speaker: {device}").format(device=currentName)
+		# Translators: short message when there is no default speaker.
+		return _("No speaker")
+	if currentName:
+		# Translators: short message announcing the current default microphone.
+		return _("Mic: {device}").format(device=currentName)
+	# Translators: short message when there is no default microphone.
+	return _("No mic")
+
+
+def announceDefaultDevice(render=True):
+	ui.message(getDefaultDeviceMessage(render))
+
+
+def announceBothDefaultDevices():
+	messages = [
+		getDefaultDeviceMessage(render=True),
+		getDefaultDeviceMessage(render=False)
+	]
+	ui.message("; ".join(messages))
 
 
 def applyDeviceSelections(speaker, microphone):
@@ -212,36 +270,25 @@ class AudioDeviceSelectionDialog(wx.Dialog):
 		mainSizer = wx.BoxSizer(wx.VERTICAL)
 		sHelper = gui.guiHelper.BoxSizerHelper(self, sizer=mainSizer)
 
-		self.speakerDevices = getActiveDevices(render=True)
-		self.microphoneDevices = getActiveDevices(render=False)
-		currentSpeaker = getDefaultDeviceInfo(render=True)
-		currentMicrophone = getDefaultDeviceInfo(render=False)
-		currentSpeakerId = currentSpeaker[0] if currentSpeaker else None
-		currentMicrophoneId = currentMicrophone[0] if currentMicrophone else None
+		self.speakerDevices = []
+		self.microphoneDevices = []
 
 		self.speakerChoice = sHelper.addLabeledControl(
 			_("&Speakers:"),
 			wx.Choice,
-			choices=self._makeChoices(
-				self.speakerDevices,
-				currentSpeakerId,
-				_("Do not change the default speaker")
-			)
+			choices=[]
 		)
-		self.speakerChoice.SetSelection(0)
 
 		self.microphoneChoice = sHelper.addLabeledControl(
 			_("&Microphones:"),
 			wx.Choice,
-			choices=self._makeChoices(
-				self.microphoneDevices,
-				currentMicrophoneId,
-				_("Do not change the default microphone")
-			)
+			choices=[]
 		)
-		self.microphoneChoice.SetSelection(0)
 
 		buttonSizer = wx.StdDialogButtonSizer()
+		refreshButton = wx.Button(self, label=_("&Refresh devices"))
+		refreshButton.Bind(wx.EVT_BUTTON, self._onRefresh)
+		buttonSizer.AddButton(refreshButton)
 		applyButton = wx.Button(self, wx.ID_OK, _("&Apply"))
 		applyButton.SetDefault()
 		buttonSizer.AddButton(applyButton)
@@ -249,20 +296,80 @@ class AudioDeviceSelectionDialog(wx.Dialog):
 		buttonSizer.Realize()
 		mainSizer.Add(buttonSizer, flag=wx.ALIGN_RIGHT | wx.ALL, border=10)
 
+		self._refreshDeviceChoices()
 		self.SetSizerAndFit(mainSizer)
 		self.CentreOnParent()
 		self.speakerChoice.SetFocus()
 
+	def _onRefresh(self, event):
+		self._refreshDeviceChoices()
+		self.Fit()
+		# Translators: spoken after refreshing the quick device-selection dialog.
+		ui.message(_("Audio devices refreshed"))
+
+	def _refreshDeviceChoices(self):
+		speakerId = self._getSelectedDeviceId(self.speakerChoice, self.speakerDevices)
+		microphoneId = self._getSelectedDeviceId(
+			self.microphoneChoice,
+			self.microphoneDevices
+		)
+		self.speakerDevices = getActiveDevices(render=True)
+		self.microphoneDevices = getActiveDevices(render=False)
+		self._updateSpeakerChoice(speakerId)
+		self._updateMicrophoneChoice(microphoneId)
+
+	def _updateSpeakerChoice(self, selectedId):
+		current = getDefaultDeviceInfo(render=True)
+		currentId = current[0] if current else None
+		choices = self._makeChoices(
+			self.speakerDevices,
+			currentId,
+			_("Do not change the default speaker"),
+			_("No connected speakers")
+		)
+		self._replaceChoices(
+			self.speakerChoice,
+			choices,
+			self.speakerDevices,
+			selectedId
+		)
+
+	def _updateMicrophoneChoice(self, selectedId):
+		current = getDefaultDeviceInfo(render=False)
+		currentId = current[0] if current else None
+		choices = self._makeChoices(
+			self.microphoneDevices,
+			currentId,
+			_("Do not change the default microphone"),
+			_("No connected microphones")
+		)
+		self._replaceChoices(
+			self.microphoneChoice,
+			choices,
+			self.microphoneDevices,
+			selectedId
+		)
+
 	@staticmethod
-	def _makeChoices(devices, currentId, unchangedLabel):
+	def _makeChoices(devices, currentId, unchangedLabel, emptyLabel):
+		if not devices:
+			return [emptyLabel]
 		choices = [unchangedLabel]
-		for deviceId, name in devices:
+		displayNames = getDisambiguatedDeviceNames(devices)
+		for (deviceId, _name), displayName in zip(devices, displayNames):
 			if deviceId == currentId:
 				# Translators: marks the current device in the quick selection dialog.
-				choices.append(_("{device} (current default)").format(device=name))
+				label = _("{device} (current default)").format(device=displayName)
+				choices.append(label)
 			else:
-				choices.append(name)
+				choices.append(displayName)
 		return choices
+
+	@staticmethod
+	def _replaceChoices(choice, labels, devices, selectedId):
+		choice.Set(labels)
+		choice.Enable(bool(devices))
+		choice.SetSelection(getDeviceSelectionIndex(devices, selectedId))
 
 	def getSelections(self):
 		"""Return explicitly selected endpoints; index zero means no change."""
@@ -278,83 +385,86 @@ class AudioDeviceSelectionDialog(wx.Dialog):
 			return None
 		return devices[selection - 1]
 
+	@staticmethod
+	def _getSelectedDeviceId(choice, devices):
+		selection = AudioDeviceSelectionDialog._getSelection(choice, devices)
+		return selection[0] if selection else None
+
 
 class AudioSwitcherSettingsPanel(SettingsPanel):
 	title = _("Audio Switcher")
 
-	def prepareChoices(self, activeDevices):
+	def _prepareDeviceChoices(self, activeDevices, emptyLabel):
 		"""Prepares values list (id|name) and display choices list for wx.Choice."""
 		values = [""]
-		choices = [""]
-		
+		if not activeDevices:
+			return values, [emptyLabel]
+		choices = [""] + getDisambiguatedDeviceNames(activeDevices)
+
 		for dev_id, name in activeDevices:
 			values.append(f"{dev_id}|{name}")
-			choices.append(name)
 		return values, choices
 
 	def makeSettings(self, settingsSizer):
 		sHelper = gui.guiHelper.BoxSizerHelper(self, sizer=settingsSizer)
-
 		playbackDevices = getActiveDevices(render=True)
 		captureDevices = getActiveDevices(render=False)
-
 		cfg = config.conf["audioSwitcher"]
-
-		# Prepare Speaker Choices
-		self.speakerValues, self.speakerChoices = self.prepareChoices(playbackDevices)
-
-		# Prepare Microphone Choices
-		self.micValues, self.micChoices = self.prepareChoices(captureDevices)
-
-		# Speaker 1 Selection
-		self.speakerDevice1Choice = sHelper.addLabeledControl(
-			_("&Speaker 1:"),
-			wx.Choice,
-			choices=self.speakerChoices
+		self.speakerValues, self.speakerChoices = self._prepareDeviceChoices(
+			playbackDevices,
+			_("No connected speakers")
 		)
-		self.setSelectionOrAdd(self.speakerDevice1Choice, cfg["speakerDevice1"], self.speakerValues)
-
-		# Speaker 2 Selection
-		self.speakerDevice2Choice = sHelper.addLabeledControl(
-			_("S&peaker 2:"),
-			wx.Choice,
-			choices=self.speakerChoices
+		self.micValues, self.micChoices = self._prepareDeviceChoices(
+			captureDevices,
+			_("No connected microphones")
 		)
-		self.setSelectionOrAdd(self.speakerDevice2Choice, cfg["speakerDevice2"], self.speakerValues)
+		self._addSpeakerSettings(sHelper, cfg)
+		self._addMicrophoneSettings(sHelper, cfg)
+		self._addFeedbackSettings(sHelper, cfg)
 
-		# Speaker 3 Selection
-		self.speakerDevice3Choice = sHelper.addLabeledControl(
-			_("Sp&eaker 3:"),
-			wx.Choice,
-			choices=self.speakerChoices
+	def _addSpeakerSettings(self, sHelper, cfg):
+		definitions = (
+			(_("&Speaker 1:"), cfg["speakerDevice1"]),
+			(_("S&peaker 2:"), cfg["speakerDevice2"]),
+			(_("Sp&eaker 3:"), cfg["speakerDevice3"])
 		)
-		self.setSelectionOrAdd(self.speakerDevice3Choice, cfg["speakerDevice3"], self.speakerValues)
-
-		# Microphone 1 Selection
-		self.micDevice1Choice = sHelper.addLabeledControl(
-			_("&Microphone 1:"),
-			wx.Choice,
-			choices=self.micChoices
+		(
+			self.speakerDevice1Choice,
+			self.speakerDevice2Choice,
+			self.speakerDevice3Choice
+		) = self._addDeviceChoices(
+			sHelper,
+			self.speakerChoices,
+			self.speakerValues,
+			definitions
 		)
-		self.setSelectionOrAdd(self.micDevice1Choice, cfg["micDevice1"], self.micValues)
 
-		# Microphone 2 Selection
-		self.micDevice2Choice = sHelper.addLabeledControl(
-			_("M&icrophone 2:"),
-			wx.Choice,
-			choices=self.micChoices
+	def _addMicrophoneSettings(self, sHelper, cfg):
+		definitions = (
+			(_("&Microphone 1:"), cfg["micDevice1"]),
+			(_("M&icrophone 2:"), cfg["micDevice2"]),
+			(_("Mi&crophone 3:"), cfg["micDevice3"])
 		)
-		self.setSelectionOrAdd(self.micDevice2Choice, cfg["micDevice2"], self.micValues)
-
-		# Microphone 3 Selection
-		self.micDevice3Choice = sHelper.addLabeledControl(
-			_("Mi&crophone 3:"),
-			wx.Choice,
-			choices=self.micChoices
+		(
+			self.micDevice1Choice,
+			self.micDevice2Choice,
+			self.micDevice3Choice
+		) = self._addDeviceChoices(
+			sHelper,
+			self.micChoices,
+			self.micValues,
+			definitions
 		)
-		self.setSelectionOrAdd(self.micDevice3Choice, cfg["micDevice3"], self.micValues)
 
-		# Feedback Choices
+	def _addDeviceChoices(self, sHelper, choices, values, definitions):
+		choiceControls = []
+		for label, configuredValue in definitions:
+			choice = sHelper.addLabeledControl(label, wx.Choice, choices=choices)
+			self._selectConfiguredDevice(choice, configuredValue, values)
+			choiceControls.append(choice)
+		return choiceControls
+
+	def _addFeedbackSettings(self, sHelper, cfg):
 		self.feedbackChoices = [
 			_("Beep and Speech"),
 			_("Speech Only"),
@@ -368,7 +478,8 @@ class AudioSwitcherSettingsPanel(SettingsPanel):
 		)
 		self.feedbackTypeChoice.SetSelection(cfg["feedbackType"])
 
-	def setSelectionOrAdd(self, choiceControl, value, valuesList):
+	def _selectConfiguredDevice(self, choiceControl, value, valuesList):
+		choiceControl.Enable(len(valuesList) > 1)
 		if value in valuesList:
 			choiceControl.SetSelection(valuesList.index(value))
 		else:
@@ -477,3 +588,10 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 	)
 	def script_announceDefaultMicrophone(self, gesture):
 		announceDefaultDevice(render=False)
+
+	@script(
+		# Translators: description in Input Gestures dialog.
+		description=_("Announce current default speaker and microphone.")
+	)
+	def script_announceBothDefaultDevices(self, gesture):
+		announceBothDefaultDevices()

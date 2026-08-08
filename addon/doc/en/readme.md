@@ -12,9 +12,12 @@ Audio Switcher is an NVDA add-on for quickly setting configured Windows audio de
 - Set one of three microphone/input devices as default.
 - Announce the current default speaker.
 - Announce the current default microphone.
+- Announce the current default speaker and microphone together.
 - Open a compact dialog to change either the default speaker, the default microphone, or both.
+- Refresh connected devices from inside the quick selection dialog.
 - Optional feedback: beep and speech, speech only, beep only, or none.
 - Unique hardware ID matching to prevent conflicts between devices with identical names.
+- Numbered labels distinguish connected devices that have identical names.
 - Device lists show only audio devices that are currently connected.
 
 ## Settings
@@ -47,6 +50,7 @@ Available actions:
 - Set microphone 3 as default
 - Announce current default speaker
 - Announce current default microphone
+- Announce current default speaker and microphone
 - Choose default audio devices
 
-The quick selection dialog lists connected speakers and microphones separately. Each list starts with a **Do not change** choice, so selecting a device in one list never changes the other device type unless you select it explicitly.
+The quick selection dialog lists connected speakers and microphones separately. Each list starts with a **Do not change** choice, so selecting a device in one list never changes the other device type unless you select it explicitly. **Refresh devices** preserves a selected device while it remains connected and resets only a selection whose device disappeared. Empty lists state that no connected devices are available and are disabled.
