@@ -1,6 +1,8 @@
 import logging
 import os
 import tempfile
+from _ctypes import COMError
+
 import comtypes.client
 
 # Set comtypes code cache directory to a temporary location to avoid permission issues
@@ -61,13 +63,13 @@ def getActiveDevices(render=True):
 			device = AudioUtilities.CreateDevice(item)
 			if device:
 				devices.append((device.id, device.FriendlyName))
-	except Exception as e:
+	except (COMError, OSError) as e:
 		logging.error(f"Error enumerating audio devices: {e}")
 	return devices
 
 
-def getDefaultDeviceFriendlyName(render=True):
-	"""Returns the friendly name of the currently active default audio device.
+def getDefaultDeviceInfo(render=True):
+	"""Return the ID and friendly name of the active default audio device.
 	render=True for playback devices, render=False for capture devices.
 	"""
 	flow = EDataFlow.eRender.value if render else EDataFlow.eCapture.value
@@ -77,9 +79,52 @@ def getDefaultDeviceFriendlyName(render=True):
 		device = enumerator.GetDefaultAudioEndpoint(flow, 0)
 		if device:
 			dev = AudioUtilities.CreateDevice(device)
-			return dev.FriendlyName
-	except Exception as e:
-		logging.error(f"Error getting default audio device friendly name: {e}")
+			return dev.id, dev.FriendlyName
+	except (COMError, OSError) as e:
+		logging.error(f"Error getting default audio device information: {e}")
+	return None
+
+
+def getDefaultDeviceFriendlyName(render=True):
+	deviceInfo = getDefaultDeviceInfo(render)
+	return deviceInfo[1] if deviceInfo else None
+
+
+def setDefaultDevice(deviceId):
+	"""Set an audio endpoint as default for every role used by the add-on."""
+	try:
+		AudioUtilities.SetDefaultDevice(
+			deviceId,
+			roles=[ERole.eConsole, ERole.eMultimedia, ERole.eCommunications]
+		)
+		return True
+	except (COMError, OSError) as e:
+		logging.error(f"SetDefaultDevice failed for device '{deviceId}': {e}")
+		return False
+
+
+def provideFeedback(successMessages, failureMessages=()):
+	"""Report successful changes by preference and always report failures."""
+	feedback = config.conf["audioSwitcher"]["feedbackType"]
+	# 0: Beep + Speech, 1: Speech, 2: Beep, 3: None
+	if successMessages and feedback in (0, 2):
+		tones.beep(440, 100)
+	spokenMessages = list(failureMessages)
+	if feedback in (0, 1):
+		spokenMessages = list(successMessages) + spokenMessages
+	if spokenMessages:
+		ui.message("; ".join(spokenMessages))
+
+
+def findMatchingDeviceId(activeDevices, targetId, targetName):
+	if targetId:
+		for deviceId, _name in activeDevices:
+			if deviceId == targetId:
+				return deviceId
+	if targetName:
+		for deviceId, name in activeDevices:
+			if targetName.lower() in name.lower():
+				return deviceId
 	return None
 
 
@@ -100,61 +145,24 @@ def setConfiguredDevice(render=True, slot=1):
 
 	targetId, targetName = parseDeviceConfig(targetValue)
 
-	# Find the target device ID by matching ID first, then FriendlyName
-	flow = EDataFlow.eRender.value if render else EDataFlow.eCapture.value
-	target_id = None
-	try:
-		enumerator = AudioUtilities.GetDeviceEnumerator()
-		endpoints = enumerator.EnumAudioEndpoints(flow, DEVICE_STATE.ACTIVE.value)
-		count = endpoints.GetCount()
-		
-		# First pass: match by ID
-		if targetId:
-			for i in range(count):
-				item = endpoints.Item(i)
-				dev = AudioUtilities.CreateDevice(item)
-				if dev and dev.id == targetId:
-					target_id = dev.id
-					break
-		
-		# Second pass: match by friendly name if ID not matched
-		if not target_id and targetName:
-			for i in range(count):
-				item = endpoints.Item(i)
-				dev = AudioUtilities.CreateDevice(item)
-				if dev and targetName.lower() in dev.FriendlyName.lower():
-					target_id = dev.id
-					break
-	except Exception as e:
-		logging.error(f"Error searching for device: {e}")
+	activeDevices = getActiveDevices(render)
+	target_id = findMatchingDeviceId(activeDevices, targetId, targetName)
 
 	if not target_id:
 		# Translators: short message when the configured device is unavailable.
 		ui.message(_("Not found"))
 		return
 
-	success = True
-	try:
-		# Set the device as default for all three roles at once
-		AudioUtilities.SetDefaultDevice(
-			target_id,
-			roles=[ERole.eConsole, ERole.eMultimedia, ERole.eCommunications]
+	if setDefaultDevice(target_id):
+		# Translators: short message when a default audio device slot is selected.
+		message = _("Done: {deviceType} {slot}").format(
+			deviceType=deviceType,
+			slot=slot
 		)
-	except Exception as e:
-		logging.error(f"SetDefaultDevice failed for target_id '{target_id}': {e}")
-		success = False
-
-	if success:
-		feedback = cfg["feedbackType"]
-		# 0: Beep + Speech, 1: Speech, 2: Beep, 3: None
-		if feedback in (0, 2):
-			tones.beep(440, 100)
-		if feedback in (0, 1):
-			# Translators: short message when a default audio device slot is selected.
-			ui.message(_("Done: {deviceType} {slot}").format(deviceType=deviceType, slot=slot))
+		provideFeedback([message])
 	else:
 		# Translators: short message when setting default device fails.
-		ui.message(_("Failed to set device"))
+		provideFeedback([], [_("Failed to set device")])
 
 
 def announceDefaultDevice(render=True):
@@ -175,42 +183,113 @@ def announceDefaultDevice(render=True):
 			ui.message(_("No mic"))
 
 
+def applyDeviceSelections(speaker, microphone):
+	successMessages = []
+	failureMessages = []
+	if speaker:
+		deviceId, name = speaker
+		if setDefaultDevice(deviceId):
+			# Translators: confirms a speaker selected in the quick dialog.
+			successMessages.append(_("Default speaker: {device}").format(device=name))
+		else:
+			failureMessages.append(_("Failed to set speaker"))
+	if microphone:
+		deviceId, name = microphone
+		if setDefaultDevice(deviceId):
+			# Translators: confirms a microphone selected in the quick dialog.
+			message = _("Default microphone: {device}").format(device=name)
+			successMessages.append(message)
+		else:
+			failureMessages.append(_("Failed to set microphone"))
+	provideFeedback(successMessages, failureMessages)
+
+
+class AudioDeviceSelectionDialog(wx.Dialog):
+	"""Choose connected speakers and microphones without changing saved slots."""
+
+	def __init__(self, parent):
+		super().__init__(parent, title=_("Choose default audio devices"))
+		mainSizer = wx.BoxSizer(wx.VERTICAL)
+		sHelper = gui.guiHelper.BoxSizerHelper(self, sizer=mainSizer)
+
+		self.speakerDevices = getActiveDevices(render=True)
+		self.microphoneDevices = getActiveDevices(render=False)
+		currentSpeaker = getDefaultDeviceInfo(render=True)
+		currentMicrophone = getDefaultDeviceInfo(render=False)
+		currentSpeakerId = currentSpeaker[0] if currentSpeaker else None
+		currentMicrophoneId = currentMicrophone[0] if currentMicrophone else None
+
+		self.speakerChoice = sHelper.addLabeledControl(
+			_("&Speakers:"),
+			wx.Choice,
+			choices=self._makeChoices(
+				self.speakerDevices,
+				currentSpeakerId,
+				_("Do not change the default speaker")
+			)
+		)
+		self.speakerChoice.SetSelection(0)
+
+		self.microphoneChoice = sHelper.addLabeledControl(
+			_("&Microphones:"),
+			wx.Choice,
+			choices=self._makeChoices(
+				self.microphoneDevices,
+				currentMicrophoneId,
+				_("Do not change the default microphone")
+			)
+		)
+		self.microphoneChoice.SetSelection(0)
+
+		buttonSizer = wx.StdDialogButtonSizer()
+		applyButton = wx.Button(self, wx.ID_OK, _("&Apply"))
+		applyButton.SetDefault()
+		buttonSizer.AddButton(applyButton)
+		buttonSizer.AddButton(wx.Button(self, wx.ID_CANCEL))
+		buttonSizer.Realize()
+		mainSizer.Add(buttonSizer, flag=wx.ALIGN_RIGHT | wx.ALL, border=10)
+
+		self.SetSizerAndFit(mainSizer)
+		self.CentreOnParent()
+		self.speakerChoice.SetFocus()
+
+	@staticmethod
+	def _makeChoices(devices, currentId, unchangedLabel):
+		choices = [unchangedLabel]
+		for deviceId, name in devices:
+			if deviceId == currentId:
+				# Translators: marks the current device in the quick selection dialog.
+				choices.append(_("{device} (current default)").format(device=name))
+			else:
+				choices.append(name)
+		return choices
+
+	def getSelections(self):
+		"""Return explicitly selected endpoints; index zero means no change."""
+		return (
+			self._getSelection(self.speakerChoice, self.speakerDevices),
+			self._getSelection(self.microphoneChoice, self.microphoneDevices)
+		)
+
+	@staticmethod
+	def _getSelection(choice, devices):
+		selection = choice.GetSelection()
+		if selection <= 0:
+			return None
+		return devices[selection - 1]
+
+
 class AudioSwitcherSettingsPanel(SettingsPanel):
 	title = _("Audio Switcher")
 
-	def prepareChoices(self, activeDevices, savedValues):
+	def prepareChoices(self, activeDevices):
 		"""Prepares values list (id|name) and display choices list for wx.Choice."""
 		values = [""]
 		choices = [""]
 		
-		# Add active devices
 		for dev_id, name in activeDevices:
 			values.append(f"{dev_id}|{name}")
 			choices.append(name)
-			
-		# Add saved values if they are not already represented
-		for saved_val in savedValues:
-			if not saved_val:
-				continue
-			targetId, targetName = parseDeviceConfig(saved_val)
-			display_name = targetName if targetName else saved_val
-			
-			# Check if already present
-			already_exists = False
-			for val in values:
-				val_id, val_name = parseDeviceConfig(val)
-				if targetId and val_id == targetId:
-					already_exists = True
-					break
-				elif not targetId and val_name.lower() == targetName.lower():
-					already_exists = True
-					break
-					
-			if not already_exists:
-				values.append(saved_val)
-				# Translators: suffix shown next to a saved device that is not currently connected.
-				choices.append(f"{display_name} " + _("(disconnected)"))
-				
 		return values, choices
 
 	def makeSettings(self, settingsSizer):
@@ -222,12 +301,10 @@ class AudioSwitcherSettingsPanel(SettingsPanel):
 		cfg = config.conf["audioSwitcher"]
 
 		# Prepare Speaker Choices
-		savedSpeakers = [cfg["speakerDevice1"], cfg["speakerDevice2"], cfg["speakerDevice3"]]
-		self.speakerValues, self.speakerChoices = self.prepareChoices(playbackDevices, savedSpeakers)
+		self.speakerValues, self.speakerChoices = self.prepareChoices(playbackDevices)
 
 		# Prepare Microphone Choices
-		savedMics = [cfg["micDevice1"], cfg["micDevice2"], cfg["micDevice3"]]
-		self.micValues, self.micChoices = self.prepareChoices(captureDevices, savedMics)
+		self.micValues, self.micChoices = self.prepareChoices(captureDevices)
 
 		# Speaker 1 Selection
 		self.speakerDevice1Choice = sHelper.addLabeledControl(
@@ -323,6 +400,27 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 		super().terminate(*args, **kwargs)
 		if AudioSwitcherSettingsPanel in NVDASettingsDialog.categoryClasses:
 			NVDASettingsDialog.categoryClasses.remove(AudioSwitcherSettingsPanel)
+
+	@script(
+		# Translators: description in Input Gestures dialog.
+		description=_("Choose default audio devices.")
+	)
+	def script_chooseDefaultAudioDevices(self, gesture):
+		wx.CallAfter(self._showAudioDeviceSelectionDialog)
+
+	def _showAudioDeviceSelectionDialog(self):
+		gui.mainFrame.prePopup()
+		try:
+			dialog = AudioDeviceSelectionDialog(gui.mainFrame)
+			try:
+				if dialog.ShowModal() != wx.ID_OK:
+					return
+				speaker, microphone = dialog.getSelections()
+			finally:
+				dialog.Destroy()
+		finally:
+			gui.mainFrame.postPopup()
+		applyDeviceSelections(speaker, microphone)
 
 	@script(
 		# Translators: description in Input Gestures dialog.

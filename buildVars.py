@@ -20,12 +20,18 @@ addon_info = AddonInfo(
 	addon_summary=_("Audio Switcher"),
 	# Add-on description
 	# Translators: Long description to be shown for this add-on on add-on information from add-on store
-	addon_description=_("Sets one of three configured speakers or microphones as default and announces current defaults."),
+	addon_description=_(
+		"Sets configured or directly selected speakers and microphones as default "
+		"and announces current defaults."
+	),
 	# version
-	addon_version="2026.1",
+	addon_version="2026.2",
 	# Brief changelog for this version
 	# Translators: what's new content for the add-on version to be shown in the add-on store
-	addon_changelog=_("Initial conversion to standard add-on structure, hardware ID matching, and comtypes cache fix."),
+	addon_changelog=_(
+		"Added a quick dialog for independently selecting the default speaker and microphone, "
+		"and limited device lists to connected devices."
+	),
 	# Author(s)
 	addon_author="Kamal Yaser",
 	# URL for the add-on documentation support
@@ -65,7 +71,7 @@ i18nSources: list[str] = pythonSources + ["buildVars.py"]
 # Paths are relative to the addon directory, not to the root directory of your addon sources.
 # You can either list every file (using ""/") as a path separator,
 # or use glob expressions.
-excludedFiles: list[str] = []
+excludedFiles: list[str] = ["**/__pycache__/**", "**/*.pyc"]
 
 # Base language for the NVDA add-on
 # If your add-on is written in a language other than english, modify this variable.
