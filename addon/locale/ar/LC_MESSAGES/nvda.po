@@ -246,14 +246,57 @@ msgstr ""
 "تعيين السماعات والميكروفونات المهيأة أو المختارة مباشرة أجهزة افتراضية، ونطق "
 "الأجهزة الافتراضية الحالية."
 
-#: buildVars.py:32
+#: buildVars.py:36
 msgid ""
-"Added a refreshable quick device dialog with preserved selections, explicit "
-"empty states, duplicate-name labels, connected-only lists, and combined "
-"default-device announcement. Improved device enumeration and prevented "
-"ambiguous legacy names from selecting the wrong device."
+"Migrated audio backend to pure Win32 Core Audio via ctypes, eliminating pycaw, comtypes, and temporary disk cache. "
+"Added one-key cyclic device switching for speakers and microphones with position announcements. "
+"Added instant hardware mute toggle and mute state announcement for the default microphone."
 msgstr ""
-"إضافة حوار سريع قابل للتحديث، يحفظ الاختيارات، ويصرح بخلو القوائم، ويميز "
-"الأسماء المتشابهة، ويقتصر على الأجهزة المتصلة، وينطق الجهازين الافتراضيين "
-"معاً. وتحسين استقراء الأجهزة ومنع الأسماء القديمة الملتبسة من اختيار جهاز غير "
-"مقصود."
+"ترحيل البنية التحتية إلى واجهات Win32 Core Audio النقية عبر ctypes، والتخلص التام من pycaw و comtypes والملفات المؤقتة. "
+"وإضافة التبديل الدوري بين السماعات والميكروفونات بنقرة واحدة مع نطق موضع الجهاز. "
+"وإضافة كتم واسترجاع الميكروفون الافتراضي فورياً وإعلان حالة كتمه."
+
+msgid "No connected speakers"
+msgstr "لا توجد سماعات متصلة"
+
+msgid "No connected microphones"
+msgstr "لا توجد ميكروفونات متصلة"
+
+#, python-brace-format
+msgid "Only one speaker: {device}"
+msgstr "لا توجد سوى سماعة واحدة: {device}"
+
+#, python-brace-format
+msgid "Only one mic: {device}"
+msgstr "لا يوجد سوى ميكروفون واحد: {device}"
+
+#, python-brace-format
+msgid "Speaker: {device} ({index} of {total})"
+msgstr "السماعة: {device} ({index} من {total})"
+
+#, python-brace-format
+msgid "Mic: {device} ({index} of {total})"
+msgstr "الميكروفون: {device} ({index} من {total})"
+
+msgid "Mic muted"
+msgstr "الميكروفون مكتوم"
+
+msgid "Mic on"
+msgstr "الميكروفون يعمل"
+
+#. Translators: description in Input Gestures dialog.
+msgid "Cycle to next playback device (speaker)."
+msgstr "التبديل إلى السماعة التالية."
+
+#. Translators: description in Input Gestures dialog.
+msgid "Cycle to next recording device (microphone)."
+msgstr "التبديل إلى الميكروفون التالي."
+
+#. Translators: description in Input Gestures dialog.
+msgid "Toggle mute for default microphone."
+msgstr "كتم واسترجاع الميكروفون الافتراضي."
+
+#. Translators: description in Input Gestures dialog.
+msgid "Announce whether default microphone is muted."
+msgstr "إعلان حالة كتم الميكروفون الافتراضي."
+

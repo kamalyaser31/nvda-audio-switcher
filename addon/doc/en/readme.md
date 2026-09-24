@@ -1,13 +1,17 @@
 # Audio Switcher
 
 • Author: Kamal Yaser
-• Version: 2026.2
+• Version: 2026.3
 • Compatibility: NVDA 2024.1 and later
 
 Audio Switcher is an NVDA add-on for quickly setting configured Windows audio devices as default. It is designed to be simple and lightweight, avoiding the complexity of other audio control add-ons by focusing solely on quick and reliable device switching.
 
 ## Features
 
+- Cycle to the next playback device (speaker) with one key, announcing its name and relative position.
+- Cycle to the next recording device (microphone) with one key, announcing its name and relative position.
+- Instant hardware kernel mute toggle for the default microphone with distinct audio tones and concise speech.
+- Announce current default microphone mute state without altering it.
 - Set one of three speaker/output devices as default.
 - Set one of three microphone/input devices as default.
 - Announce the current default speaker.
@@ -16,9 +20,11 @@ Audio Switcher is an NVDA add-on for quickly setting configured Windows audio de
 - Open a compact dialog to change either the default speaker, the default microphone, or both.
 - Refresh connected devices from inside the quick selection dialog.
 - Optional feedback: beep and speech, speech only, beep only, or none.
+- Pure Win32 Core Audio implementation via ctypes with zero external dependencies and no temporary cache files.
 - Unique hardware ID matching to prevent conflicts between devices with identical names.
 - Numbered labels distinguish connected devices that have identical names.
 - Device lists show only audio devices that are currently connected.
+
 
 ## Settings
 
@@ -48,6 +54,10 @@ Available actions:
 - Set microphone 1 as default
 - Set microphone 2 as default
 - Set microphone 3 as default
+- Cycle to next playback device (speaker)
+- Cycle to next recording device (microphone)
+- Toggle mute for default microphone
+- Announce whether default microphone is muted
 - Announce current default speaker
 - Announce current default microphone
 - Announce current default speaker and microphone
