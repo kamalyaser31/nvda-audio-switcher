@@ -17,3 +17,6 @@
 - [x] Bump version to 2026.3 in `buildVars.py` and `addon/manifest.ini`.
 - [x] Update documentation in Arabic (`addon/doc/ar/readme.md`) and English (`addon/doc/en/readme.md`).
 - [x] Update project state files (`CHANGELOG.md`, `project_state.md`, `task.md`).
+- [x] Push commits to origin/master.
+- [x] Publish GitHub Release `v2026.3` with attached `audioSwitcher-2026.3.nvda-addon`.
+- [x] Submit registration issue to NVDA Add-on Store (`nvaccess/addon-datastore` issue #11776).

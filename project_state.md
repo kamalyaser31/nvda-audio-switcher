@@ -25,3 +25,5 @@ Audio Switcher is an NVDA screen reader add-on created by Kamal Yaser that sets 
 - Added instant default microphone mute toggle and mute state query.
 - Version bumped to 2026.3 across manifest, buildVars, and documentation.
 - All 16 legacy `pycaw/` files removed.
+- GitHub Release v2026.3 published with `audioSwitcher-2026.3.nvda-addon`.
+- Registration issue #11776 submitted to NVDA Add-on Store (`nvaccess/addon-datastore`).
