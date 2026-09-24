@@ -256,12 +256,6 @@ msgstr ""
 "وإضافة التبديل الدوري بين السماعات والميكروفونات بنقرة واحدة مع نطق موضع الجهاز. "
 "وإضافة كتم واسترجاع الميكروفون الافتراضي فورياً وإعلان حالة كتمه."
 
-msgid "No connected speakers"
-msgstr "لا توجد سماعات متصلة"
-
-msgid "No connected microphones"
-msgstr "لا توجد ميكروفونات متصلة"
-
 #, python-brace-format
 msgid "Only one speaker: {device}"
 msgstr "لا توجد سوى سماعة واحدة: {device}"
