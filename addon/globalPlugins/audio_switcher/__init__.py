@@ -4,6 +4,8 @@ import gui
 import config
 import ui
 import tones
+import synthDriverHandler
+from logHandler import log
 from gui.settingsDialogs import SettingsPanel, NVDASettingsDialog
 from scriptHandler import script
 from .core_audio import (
@@ -24,6 +26,7 @@ speakerDevice1 = string(default="")
 speakerDevice2 = string(default="")
 speakerDevice3 = string(default="")
 feedbackType = integer(default=0)
+nvdaSecondaryOutput = string(default="")
 """
 
 
@@ -82,69 +85,44 @@ def provideFeedback(successMessages, failureMessages=()):
         ui.message("; ".join(spokenMessages))
 
 
-def _getOnlyDeviceId(deviceIds):
-    return deviceIds[0] if len(deviceIds) == 1 else None
+def _findDeviceByName(activeDevices, targetName):
+    key = targetName.casefold()
+    exact = [devId for devId, name in activeDevices if name.casefold() == key]
+    if len(exact) == 1:
+        return exact[0]
+    partial = [devId for devId, name in activeDevices if key in name.casefold()]
+    return partial[0] if len(partial) == 1 else None
 
 
 def findMatchingDeviceId(activeDevices, targetId, targetName):
     if targetId:
-        for deviceId, _name in activeDevices:
-            if deviceId == targetId:
-                return deviceId
-    if not targetName:
-        return None
-    targetNameKey = targetName.casefold()
-    exactMatch = _getOnlyDeviceId(
-        [
-            deviceId
-            for deviceId, name in activeDevices
-            if name.casefold() == targetNameKey
-        ]
-    )
-    if exactMatch:
-        return exactMatch
-    return _getOnlyDeviceId(
-        [
-            deviceId
-            for deviceId, name in activeDevices
-            if targetNameKey in name.casefold()
-        ]
-    )
+        for devId, _name in activeDevices:
+            if devId == targetId:
+                return devId
+    return _findDeviceByName(activeDevices, targetName) if targetName else None
+
+
+def _resolveConfiguredSlot(render, slot):
+    cfg = config.conf["audioSwitcher"]
+    devType = _("speaker") if render else _("mic")
+    key = f"speakerDevice{slot}" if render else f"micDevice{slot}"
+    return devType, cfg[key]
 
 
 def setConfiguredDevice(render=True, slot=1):
-    cfg = config.conf["audioSwitcher"]
-    if render:
-        deviceType = _("speaker")
-        deviceKey = f"speakerDevice{slot}"
-    else:
-        deviceType = _("mic")
-        deviceKey = f"micDevice{slot}"
-
-    targetValue = cfg[deviceKey]
+    devType, targetValue = _resolveConfiguredSlot(render, slot)
     if not targetValue:
-        # Translators: short message when the requested device slot is empty.
         ui.message(_("Not set"))
         return
-
     targetId, targetName = parseDeviceConfig(targetValue)
-
-    activeDevices = getActiveDevices(render)
-    target_id = findMatchingDeviceId(activeDevices, targetId, targetName)
-
+    target_id = findMatchingDeviceId(getActiveDevices(render), targetId, targetName)
     if not target_id:
-        # Translators: short message when the configured device is unavailable.
         ui.message(_("Not found"))
         return
-
     if setDefaultDevice(target_id):
-        # Translators: short message when a default audio device slot is selected.
-        message = _("Done: {deviceType} {slot}").format(
-            deviceType=deviceType, slot=slot
-        )
-        provideFeedback([message])
+        template = _("Done: {deviceType} {slot}")
+        provideFeedback([template.format(deviceType=devType, slot=slot)])
     else:
-        # Translators: short message when setting default device fails.
         provideFeedback([], [_("Failed to set device")])
 
 
@@ -152,14 +130,10 @@ def getDefaultDeviceMessage(render=True):
     currentName = getDefaultDeviceFriendlyName(render)
     if render:
         if currentName:
-            # Translators: short message announcing the current default speaker.
             return _("Speaker: {device}").format(device=currentName)
-        # Translators: short message when there is no default speaker.
         return _("No speaker")
     if currentName:
-        # Translators: short message announcing the current default microphone.
         return _("Mic: {device}").format(device=currentName)
-    # Translators: short message when there is no default microphone.
     return _("No mic")
 
 
@@ -175,16 +149,19 @@ def announceBothDefaultDevices():
     ui.message("; ".join(messages))
 
 
+def _handleCycleFailure(render, total):
+    if total == 0:
+        ui.message(
+            _("No connected speakers") if render else _("No connected microphones")
+        )
+    else:
+        provideFeedback([], [_("Failed to set device")])
+
+
 def cycleDeviceWithFeedback(render=True):
     target, index, total = cycleNextDevice(render)
     if not target:
-        if total == 0:
-            msg = (
-                _("No connected speakers") if render else _("No connected microphones")
-            )
-            ui.message(msg)
-        else:
-            provideFeedback([], [_("Failed to set device")])
+        _handleCycleFailure(render, total)
         return
     if total == 1:
         template = (
@@ -220,46 +197,127 @@ def announceMicMuteState():
     ui.message(_("Mic muted") if is_muted else _("Mic on"))
 
 
-def applyDeviceSelections(speaker, microphone):
-    successMessages = []
-    failureMessages = []
-    if speaker:
-        deviceId, name = speaker
-        if setDefaultDevice(deviceId):
-            # Translators: confirms a speaker selected in the quick dialog.
-            successMessages.append(_("Default speaker: {device}").format(device=name))
-        else:
-            failureMessages.append(_("Failed to set speaker"))
-    if microphone:
-        deviceId, name = microphone
-        if setDefaultDevice(deviceId):
-            # Translators: confirms a microphone selected in the quick dialog.
-            message = _("Default microphone: {device}").format(device=name)
-            successMessages.append(message)
-        else:
-            failureMessages.append(_("Failed to set microphone"))
-    provideFeedback(successMessages, failureMessages)
+def getNvdaCurrentOutputDeviceId():
+    try:
+        devId = config.conf["audio"]["outputDevice"]
+        return devId if devId else "default"
+    except (KeyError, AttributeError):
+        return "default"
+
+
+def forceSynthReload():
+    if hasattr(synthDriverHandler, "handleConfigChange"):
+        try:
+            synthDriverHandler.handleConfigChange()
+            return True
+        except Exception as e:
+            log.error("AudioSwitcher: handleConfigChange failed: %s", e)
+    try:
+        synth = config.conf["speech"]["synth"]
+        synthDriverHandler.setSynth(synth)
+        return True
+    except Exception as e:
+        log.critical("AudioSwitcher: setSynth fallback failed: %s", e)
+        return False
+
+
+def safeSetNvdaOutputDevice(newDeviceId):
+    oldId = getNvdaCurrentOutputDeviceId()
+    try:
+        config.conf["audio"]["outputDevice"] = newDeviceId
+        if forceSynthReload():
+            return True
+        raise RuntimeError("Synth reload failed")
+    except Exception as e:
+        log.error("AudioSwitcher: Failed to switch NVDA output: %s", e)
+        try:
+            config.conf["audio"]["outputDevice"] = oldId
+            forceSynthReload()
+        except Exception as rollbackErr:
+            log.critical("AudioSwitcher: Rollback failed: %s", rollbackErr)
+        return False
+
+
+def _playNvdaOutputFeedback(deviceName):
+    feedback = config.conf["audioSwitcher"]["feedbackType"]
+    if feedback in (0, 2):
+        tones.beep(660, 80)
+    if feedback in (0, 1):
+        ui.message(_("NVDA: {device}").format(device=deviceName))
+
+
+def _reportNvdaToggleError(message):
+    feedback = config.conf["audioSwitcher"]["feedbackType"]
+    if feedback in (0, 2):
+        tones.beep(220, 100)
+    ui.message(message)
+
+
+def _getNvdaDisplayName(newId, active, fallbackName):
+    if newId == "default":
+        return _("Primary Device (System Default)")
+    return next((name for dev_id, name in active if dev_id == newId), fallbackName)
+
+
+def toggleNvdaOutputWithFeedback():
+    cfgValue = config.conf["audioSwitcher"]["nvdaSecondaryOutput"]
+    targetId, targetName = parseDeviceConfig(cfgValue)
+    if not targetId and not targetName:
+        _reportNvdaToggleError(_("No secondary device configured for NVDA"))
+        return
+    active = getActiveDevices(render=True)
+    matchedId = findMatchingDeviceId(active, targetId, targetName)
+    if not matchedId:
+        _reportNvdaToggleError(_("NVDA secondary device not connected"))
+        return
+    newId = "default" if getNvdaCurrentOutputDeviceId() == matchedId else matchedId
+    if not safeSetNvdaOutputDevice(newId):
+        _reportNvdaToggleError(_("Failed to switch NVDA audio output"))
+        return
+    _playNvdaOutputFeedback(_getNvdaDisplayName(newId, active, targetName))
+
+
+def _applyEndpoint(endpoint, isSpeaker, success, failure):
+    if not endpoint:
+        return
+    deviceId, name = endpoint
+    if setDefaultDevice(deviceId):
+        template = (
+            _("Default speaker: {device}")
+            if isSpeaker
+            else _("Default microphone: {device}")
+        )
+        success.append(template.format(device=name))
+    else:
+        failure.append(
+            _("Failed to set speaker") if isSpeaker else _("Failed to set microphone")
+        )
+
+
+def _applySecondaryDevice(secondaryDevice, success):
+    if secondaryDevice is None:
+        return
+    config.conf["audioSwitcher"]["nvdaSecondaryOutput"] = secondaryDevice
+    if secondaryDevice:
+        _id, name = parseDeviceConfig(secondaryDevice)
+        success.append(_("NVDA secondary: {device}").format(device=name))
+    else:
+        success.append(_("NVDA secondary device cleared"))
+
+
+def applyDeviceSelections(speaker, microphone, secondaryDevice=None):
+    success = []
+    failure = []
+    _applyEndpoint(speaker, True, success, failure)
+    _applyEndpoint(microphone, False, success, failure)
+    _applySecondaryDevice(secondaryDevice, success)
+    provideFeedback(success, failure)
 
 
 class AudioDeviceSelectionDialog(wx.Dialog):
     """Choose connected speakers and microphones without changing saved slots."""
 
-    def __init__(self, parent):
-        super().__init__(parent, title=_("Choose default audio devices"))
-        mainSizer = wx.BoxSizer(wx.VERTICAL)
-        sHelper = gui.guiHelper.BoxSizerHelper(self, sizer=mainSizer)
-
-        self.speakerDevices = []
-        self.microphoneDevices = []
-
-        self.speakerChoice = sHelper.addLabeledControl(
-            _("&Speakers:"), wx.Choice, choices=[]
-        )
-
-        self.microphoneChoice = sHelper.addLabeledControl(
-            _("&Microphones:"), wx.Choice, choices=[]
-        )
-
+    def _buildButtonSizer(self):
         buttonSizer = wx.StdDialogButtonSizer()
         refreshButton = wx.Button(self, label=_("&Refresh devices"))
         refreshButton.Bind(wx.EVT_BUTTON, self._onRefresh)
@@ -269,8 +327,24 @@ class AudioDeviceSelectionDialog(wx.Dialog):
         buttonSizer.AddButton(applyButton)
         buttonSizer.AddButton(wx.Button(self, wx.ID_CANCEL))
         buttonSizer.Realize()
-        mainSizer.Add(buttonSizer, flag=wx.ALIGN_RIGHT | wx.ALL, border=10)
+        return buttonSizer
 
+    def __init__(self, parent):
+        super().__init__(parent, title=_("Choose default audio devices"))
+        mainSizer = wx.BoxSizer(wx.VERTICAL)
+        sHelper = gui.guiHelper.BoxSizerHelper(self, sizer=mainSizer)
+        self.speakerDevices = []
+        self.microphoneDevices = []
+        self.speakerChoice = sHelper.addLabeledControl(
+            _("&Speakers:"), wx.Choice, choices=[]
+        )
+        self.microphoneChoice = sHelper.addLabeledControl(
+            _("&Microphones:"), wx.Choice, choices=[]
+        )
+        self.nvdaSecondaryChoice = sHelper.addLabeledControl(
+            _("NVDA Secondary &Output:"), wx.Choice, choices=[]
+        )
+        mainSizer.Add(self._buildButtonSizer(), flag=wx.ALIGN_RIGHT | wx.ALL, border=10)
         self._refreshDeviceChoices()
         self.SetSizerAndFit(mainSizer)
         self.CentreOnParent()
@@ -291,6 +365,24 @@ class AudioDeviceSelectionDialog(wx.Dialog):
         self.microphoneDevices = getActiveDevices(render=False)
         self._updateSpeakerChoice(speakerId)
         self._updateMicrophoneChoice(microphoneId)
+        self._updateNvdaSecondaryChoice()
+
+    def _updateNvdaSecondaryChoice(self):
+        configured = config.conf["audioSwitcher"]["nvdaSecondaryOutput"]
+        targetId, _ = parseDeviceConfig(configured)
+        choices = [_("Do not change"), _("None (Clear)")]
+        self.nvdaSecondaryValues = [None, ""]
+        if self.speakerDevices:
+            names = getDisambiguatedDeviceNames(self.speakerDevices)
+            for (dev_id, name), displayName in zip(self.speakerDevices, names):
+                self.nvdaSecondaryValues.append(f"{dev_id}|{name}")
+                if dev_id == targetId:
+                    template = _("{device} (current secondary)")
+                    choices.append(template.format(device=displayName))
+                else:
+                    choices.append(displayName)
+        self.nvdaSecondaryChoice.Set(choices)
+        self.nvdaSecondaryChoice.SetSelection(0)
 
     def _updateSpeakerChoice(self, selectedId):
         current = getDefaultDeviceInfo(render=True)
@@ -340,10 +432,13 @@ class AudioDeviceSelectionDialog(wx.Dialog):
         choice.SetSelection(getDeviceSelectionIndex(devices, selectedId))
 
     def getSelections(self):
-        """Return explicitly selected endpoints; index zero means no change."""
+        """Return explicitly selected endpoints and optional secondary device update."""
+        selIndex = self.nvdaSecondaryChoice.GetSelection()
+        secondaryVal = self.nvdaSecondaryValues[selIndex] if selIndex > 0 else None
         return (
             self._getSelection(self.speakerChoice, self.speakerDevices),
             self._getSelection(self.microphoneChoice, self.microphoneDevices),
+            secondaryVal,
         )
 
     @staticmethod
@@ -386,7 +481,41 @@ class AudioSwitcherSettingsPanel(SettingsPanel):
         )
         self._addSpeakerSettings(sHelper, cfg)
         self._addMicrophoneSettings(sHelper, cfg)
+        self._addNvdaOutputSettings(sHelper, cfg)
         self._addFeedbackSettings(sHelper, cfg)
+
+    def _prepareNvdaSecondaryChoices(self, activeDevices, configuredValue):
+        values = [""]
+        choices = [_("None (Not configured)")]
+        targetId, targetName = parseDeviceConfig(configuredValue)
+        matched = False
+        if activeDevices:
+            names = getDisambiguatedDeviceNames(activeDevices)
+            for (dev_id, name), displayName in zip(activeDevices, names):
+                values.append(f"{dev_id}|{name}")
+                choices.append(displayName)
+                if dev_id == targetId or (not targetId and name == targetName):
+                    matched = True
+        if configuredValue and not matched and targetName:
+            values.append(configuredValue)
+            template = _("{device} (saved, not connected)")
+            choices.append(template.format(device=targetName))
+        return values, choices
+
+    def _addNvdaOutputSettings(self, sHelper, cfg):
+        configured = cfg["nvdaSecondaryOutput"]
+        playback = getActiveDevices(render=True)
+        self.nvdaOutputValues, self.nvdaOutputChoices = (
+            self._prepareNvdaSecondaryChoices(playback, configured)
+        )
+        self.nvdaOutputChoice = sHelper.addLabeledControl(
+            _("NVDA Secondary &Output Device:"),
+            wx.Choice,
+            choices=self.nvdaOutputChoices,
+        )
+        self._selectConfiguredDevice(
+            self.nvdaOutputChoice, configured, self.nvdaOutputValues
+        )
 
     def _addSpeakerSettings(self, sHelper, cfg):
         definitions = (
@@ -455,6 +584,9 @@ class AudioSwitcherSettingsPanel(SettingsPanel):
         cfg["micDevice1"] = self.micValues[self.micDevice1Choice.GetSelection()]
         cfg["micDevice2"] = self.micValues[self.micDevice2Choice.GetSelection()]
         cfg["micDevice3"] = self.micValues[self.micDevice3Choice.GetSelection()]
+        cfg["nvdaSecondaryOutput"] = self.nvdaOutputValues[
+            self.nvdaOutputChoice.GetSelection()
+        ]
         cfg["feedbackType"] = self.feedbackTypeChoice.GetSelection()
 
 
@@ -491,12 +623,12 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
             try:
                 if dialog.ShowModal() != wx.ID_OK:
                     return
-                speaker, microphone = dialog.getSelections()
+                speaker, microphone, secondary = dialog.getSelections()
             finally:
                 dialog.Destroy()
         finally:
             gui.mainFrame.postPopup()
-        applyDeviceSelections(speaker, microphone)
+        applyDeviceSelections(speaker, microphone, secondary)
 
     @script(
         # Translators: description in Input Gestures dialog.
@@ -588,3 +720,10 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
     )
     def script_announceMicMuteState(self, gesture):
         announceMicMuteState()
+
+    @script(
+        # Translators: description in Input Gestures dialog.
+        description=_("Toggle NVDA audio output between Primary and secondary device.")
+    )
+    def script_toggleNvdaOutput(self, gesture):
+        toggleNvdaOutputWithFeedback()

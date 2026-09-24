@@ -20,3 +20,15 @@
 - [x] Push commits to origin/master.
 - [x] Publish GitHub Release `v2026.3` with attached `audioSwitcher-2026.3.nvda-addon`.
 - [x] Submit registration issue to NVDA Add-on Store (`nvaccess/addon-datastore` issue #11776).
+
+## Active Branch: `feat/nvda-output-toggle` - Integrate NVDA Output Toggling
+- [x] Create local feature branch `feat/nvda-output-toggle`.
+- [x] Add `nvdaSecondaryOutput` to `confspec`.
+- [x] Implement atomic NVDA audio output switching logic (`safeSetNvdaOutputDevice`, `forceSynthReload`, `toggleNvdaOutputWithFeedback`).
+- [x] Add secondary device configuration to `AudioSwitcherSettingsPanel` with unplugged persistence.
+- [x] Add secondary device configuration to `AudioDeviceSelectionDialog`.
+- [x] Add `script_toggleNvdaOutput` to `GlobalPlugin`.
+- [x] Audit code with `clean-code-guard` (functions ≤ 20 lines, typed, no broad catches).
+- [x] Update documentation (`addon/doc/ar/readme.md`, `addon/doc/en/readme.md`) and translations (`nvda.po`).
+- [ ] Finalize testing and release packaging with `scons` when authorized.
+

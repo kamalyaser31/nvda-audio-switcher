@@ -294,3 +294,53 @@ msgstr "كتم واسترجاع الميكروفون الافتراضي."
 msgid "Announce whether default microphone is muted."
 msgstr "إعلان حالة كتم الميكروفون الافتراضي."
 
+msgid "NVDA Secondary &Output Device:"
+msgstr "مخرج صوت NVDA الثا&نوي:"
+
+msgid "NVDA Secondary &Output:"
+msgstr "مخرج صوت NVDA الثا&نوي:"
+
+msgid "None (Not configured)"
+msgstr "لا يوجد (غير محدد)"
+
+#, python-brace-format
+msgid "{device} (saved, not connected)"
+msgstr "{device} (محفوظ، غير متصل)"
+
+msgid "Do not change"
+msgstr "عدم التغيير"
+
+msgid "None (Clear)"
+msgstr "لا يوجد (مسح الإعداد)"
+
+#, python-brace-format
+msgid "{device} (current secondary)"
+msgstr "{device} (الثانوي الحالي)"
+
+#, python-brace-format
+msgid "NVDA: {device}"
+msgstr "NVDA: {device}"
+
+msgid "No secondary device configured for NVDA"
+msgstr "لم يُحدد جهاز ثانوي لـ NVDA"
+
+msgid "NVDA secondary device not connected"
+msgstr "جهاز NVDA الثانوي غير متصل"
+
+msgid "Failed to switch NVDA audio output"
+msgstr "تعذر تبديل مخرج صوت NVDA"
+
+#, python-brace-format
+msgid "NVDA secondary: {device}"
+msgstr "جهاز NVDA الثانوي: {device}"
+
+msgid "NVDA secondary device cleared"
+msgstr "مُسِح جهاز NVDA الثانوي"
+
+#. Translators: description in Input Gestures dialog.
+msgid "Toggle NVDA audio output between Primary and secondary device."
+msgstr "تبديل مخرج صوت NVDA بين الجهاز الأساسي والجهاز الثانوي."
+
+msgid "Primary Device (System Default)"
+msgstr "الجهاز الأساسي (الافتراضي للنظام)"
+

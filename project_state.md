@@ -27,3 +27,12 @@ Audio Switcher is an NVDA screen reader add-on created by Kamal Yaser that sets 
 - All 16 legacy `pycaw/` files removed.
 - GitHub Release v2026.3 published with `audioSwitcher-2026.3.nvda-addon`.
 - Registration issue #11776 submitted to NVDA Add-on Store (`nvaccess/addon-datastore`).
+- Local feature branch `feat/nvda-output-toggle`:
+  - Integrated NVDA output toggling feature (merged from `audioToggler`/`nvdaOutputToggler`).
+  - Unified core audio device discovery and hybrid persistence (`id|name`) in `confspec`.
+  - Atomic switching with `synthDriverHandler.handleConfigChange()` and `setSynth()` rollback protection.
+  - Secondary output device configuration added to `AudioSwitcherSettingsPanel` with unplugged persistence.
+  - Secondary output device selection added to `AudioDeviceSelectionDialog`.
+  - Added `script_toggleNvdaOutput` to `GlobalPlugin`.
+  - `clean-code-guard` verified: all functions in `__init__.py` <= 20 lines.
+  - Documentation and translations updated in Arabic and English.
