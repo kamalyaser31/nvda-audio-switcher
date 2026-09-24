@@ -611,6 +611,17 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 
     @script(
         # Translators: description in Input Gestures dialog.
+        description=_("Open Audio Switcher settings.")
+    )
+    def script_openSettings(self, gesture):
+        wx.CallAfter(
+            gui.mainFrame.popupSettingsDialog,
+            NVDASettingsDialog,
+            AudioSwitcherSettingsPanel,
+        )
+
+    @script(
+        # Translators: description in Input Gestures dialog.
         description=_("Choose default audio devices.")
     )
     def script_chooseDefaultAudioDevices(self, gesture):

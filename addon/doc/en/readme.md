@@ -65,5 +65,6 @@ Available actions:
 - Announce current default microphone
 - Announce current default speaker and microphone
 - Choose default audio devices
+- Open Audio Switcher settings
 
 The quick selection dialog lists connected speakers and microphones separately, along with the NVDA secondary output device. Each list starts with a **Do not change** choice, so selecting a device in one list never changes the other device type unless you select it explicitly. **Refresh devices** preserves a selected device while it remains connected and resets only a selection whose device disappeared. Empty lists state that no connected devices are available and are disabled.

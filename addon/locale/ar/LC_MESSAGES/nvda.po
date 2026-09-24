@@ -344,3 +344,8 @@ msgstr "تبديل مخرج صوت NVDA بين الجهاز الأساسي وا�
 msgid "Primary Device (System Default)"
 msgstr "الجهاز الأساسي (الافتراضي للنظام)"
 
+#. Translators: description in Input Gestures dialog.
+msgid "Open Audio Switcher settings."
+msgstr "فتح إعدادات مبدل أجهزة الصوت."
+
+

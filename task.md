@@ -28,6 +28,7 @@
 - [x] Add secondary device configuration to `AudioSwitcherSettingsPanel` with unplugged persistence.
 - [x] Add secondary device configuration to `AudioDeviceSelectionDialog`.
 - [x] Add `script_toggleNvdaOutput` to `GlobalPlugin`.
+- [x] Add `script_openSettings` to `GlobalPlugin` for direct jump to Audio Switcher settings dialog.
 - [x] Audit code with `clean-code-guard` (functions ≤ 20 lines, typed, no broad catches).
 - [x] Update documentation (`addon/doc/ar/readme.md`, `addon/doc/en/readme.md`) and translations (`nvda.po`).
 - [ ] Finalize testing and release packaging with `scons` when authorized.
