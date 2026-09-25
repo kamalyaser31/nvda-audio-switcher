@@ -109,21 +109,28 @@ def _resolveConfiguredSlot(render, slot):
     return devType, cfg[key]
 
 
+def _reportSlotFeedback(devType, slot, success):
+    if success:
+        msg = _("Done: {deviceType} {slot}").format(deviceType=devType, slot=slot)
+        provideFeedback([msg])
+    else:
+        provideFeedback([], [_("Failed to set device")])
+
+
 def setConfiguredDevice(render=True, slot=1):
     devType, targetValue = _resolveConfiguredSlot(render, slot)
     if not targetValue:
         ui.message(_("Not set"))
         return
     targetId, targetName = parseDeviceConfig(targetValue)
+    if targetId and setDefaultDevice(targetId):
+        _reportSlotFeedback(devType, slot, True)
+        return
     target_id = findMatchingDeviceId(getActiveDevices(render), targetId, targetName)
     if not target_id:
         ui.message(_("Not found"))
         return
-    if setDefaultDevice(target_id):
-        template = _("Done: {deviceType} {slot}")
-        provideFeedback([template.format(deviceType=devType, slot=slot)])
-    else:
-        provideFeedback([], [_("Failed to set device")])
+    _reportSlotFeedback(devType, slot, setDefaultDevice(target_id))
 
 
 def getDefaultDeviceMessage(render=True):
@@ -259,22 +266,38 @@ def _getNvdaDisplayName(newId, active, fallbackName):
     return next((name for dev_id, name in active if dev_id == newId), fallbackName)
 
 
-def toggleNvdaOutputWithFeedback():
-    cfgValue = config.conf["audioSwitcher"]["nvdaSecondaryOutput"]
-    targetId, targetName = parseDeviceConfig(cfgValue)
-    if not targetId and not targetName:
-        _reportNvdaToggleError(_("No secondary device configured for NVDA"))
+def _switchToDefaultOutput():
+    if safeSetNvdaOutputDevice("default"):
+        _playNvdaOutputFeedback(_("Primary Device (System Default)"))
+    else:
+        _reportNvdaToggleError(_("Failed to switch NVDA audio output"))
+
+
+def _switchToSecondaryOutput(targetId, targetName):
+    if targetId and safeSetNvdaOutputDevice(targetId):
+        _playNvdaOutputFeedback(targetName or targetId)
         return
     active = getActiveDevices(render=True)
     matchedId = findMatchingDeviceId(active, targetId, targetName)
     if not matchedId:
         _reportNvdaToggleError(_("NVDA secondary device not connected"))
         return
-    newId = "default" if getNvdaCurrentOutputDeviceId() == matchedId else matchedId
-    if not safeSetNvdaOutputDevice(newId):
+    if safeSetNvdaOutputDevice(matchedId):
+        _playNvdaOutputFeedback(_getNvdaDisplayName(matchedId, active, targetName))
+    else:
         _reportNvdaToggleError(_("Failed to switch NVDA audio output"))
+
+
+def toggleNvdaOutputWithFeedback():
+    cfgValue = config.conf["audioSwitcher"]["nvdaSecondaryOutput"]
+    targetId, targetName = parseDeviceConfig(cfgValue)
+    if not targetId and not targetName:
+        _reportNvdaToggleError(_("No secondary device configured for NVDA"))
         return
-    _playNvdaOutputFeedback(_getNvdaDisplayName(newId, active, targetName))
+    if getNvdaCurrentOutputDeviceId() != "default":
+        _switchToDefaultOutput()
+    else:
+        _switchToSecondaryOutput(targetId, targetName)
 
 
 def _applyEndpoint(endpoint, isSpeaker, success, failure):

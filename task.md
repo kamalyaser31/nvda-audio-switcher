@@ -30,6 +30,6 @@
 - [x] Add `script_toggleNvdaOutput` to `GlobalPlugin`.
 - [x] Add `script_openSettings` to `GlobalPlugin` for direct jump to Audio Switcher settings dialog.
 - [x] Fix variable shadowing bug in `_updateNvdaSecondaryChoice` where `_` masked gettext translation function.
-- [x] Perform comprehensive static AST audit across codebase (zero variable shadowing, valid format strings, 100% test pass).
+- [x] Implement Fast-Path direct device execution in `setConfiguredDevice`.
 - [ ] Finalize testing and release packaging with `scons` when authorized.
 

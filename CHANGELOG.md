@@ -8,6 +8,7 @@ All notable changes to the Audio Switcher add-on will be documented in this file
 - Added one-key toggling between primary and secondary NVDA speech output devices (`script_toggleNvdaOutput`).
 - Added secondary device selector in `AudioDeviceSelectionDialog` and `AudioSwitcherSettingsPanel`.
 - Added direct shortcut to open Audio Switcher settings panel (`script_openSettings`).
+- Implemented Fast-Path direct device execution in `setConfiguredDevice` and `toggleNvdaOutputWithFeedback`, eliminating redundant active device scans.
 
 ### fix: resolve gettext translation function shadowing in secondary device choice
 - Fixed variable unpack shadowing `_` translation function causing crash in `AudioDeviceSelectionDialog`.

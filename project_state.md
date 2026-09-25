@@ -37,5 +37,6 @@ Audio Switcher is an NVDA screen reader add-on created by Kamal Yaser that sets 
   - Added `script_openSettings` to `GlobalPlugin` for direct shortcut into NVDA settings panel.
   - Fixed variable shadowing bug in `_updateNvdaSecondaryChoice` where `_` masked gettext `_()` translation function causing dialog crash.
   - Performed comprehensive AST, symbol-table, and format-string audits confirming zero errors, and verified 100% mock test suite pass.
+  - Implemented Fast-Path direct device execution in `setConfiguredDevice` and `toggleNvdaOutputWithFeedback`, eliminating redundant active device scans and registry queries.
   - `clean-code-guard` verified: all functions in `__init__.py` <= 20 lines.
   - Documentation and translations updated in Arabic and English.
