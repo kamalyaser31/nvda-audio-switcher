@@ -369,7 +369,7 @@ class AudioDeviceSelectionDialog(wx.Dialog):
 
     def _updateNvdaSecondaryChoice(self):
         configured = config.conf["audioSwitcher"]["nvdaSecondaryOutput"]
-        targetId, _ = parseDeviceConfig(configured)
+        targetId, _targetName = parseDeviceConfig(configured)
         choices = [_("Do not change"), _("None (Clear)")]
         self.nvdaSecondaryValues = [None, ""]
         if self.speakerDevices:
