@@ -2,6 +2,17 @@
 
 All notable changes to the Audio Switcher add-on will be documented in this file.
 
+## [Unreleased]
+
+### feat: integrate NVDA output toggling and direct settings panel gesture
+- Added one-key toggling between primary and secondary NVDA speech output devices (`script_toggleNvdaOutput`).
+- Added secondary device selector in `AudioDeviceSelectionDialog` and `AudioSwitcherSettingsPanel`.
+- Added direct shortcut to open Audio Switcher settings panel (`script_openSettings`).
+
+### fix: resolve gettext translation function shadowing in secondary device choice
+- Fixed variable unpack shadowing `_` translation function causing crash in `AudioDeviceSelectionDialog`.
+- Completed comprehensive AST audit confirming zero variable shadowing across codebase.
+
 ## [2026.3] - 2026-09-24
 
 ### feat: add cyclic device switching and instant default mic mute controls
