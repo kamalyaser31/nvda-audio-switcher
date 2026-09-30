@@ -30,13 +30,12 @@ Audio Switcher is an NVDA screen reader add-on created by Kamal Yaser that sets 
 - Local feature branch `feat/nvda-output-toggle`:
   - Integrated NVDA output toggling feature (merged from `audioToggler`/`nvdaOutputToggler`).
   - Unified core audio device discovery and hybrid persistence (`id|name`) in `confspec`.
-  - Atomic switching with `synthDriverHandler.handleConfigChange()` and `setSynth()` rollback protection.
-  - Secondary output device configuration added to `AudioSwitcherSettingsPanel` with unplugged persistence.
+  - Atomic switching: reinitialises `tones` and reloads the running synth via `setSynth()`, with rollback on failure.
+  - Secondary output device configuration added to `AudioSwitcherSettingsPanel`; all saved devices persist while unplugged.
   - Secondary output device selection added to `AudioDeviceSelectionDialog`.
   - Added `script_toggleNvdaOutput` to `GlobalPlugin`.
   - Added `script_openSettings` to `GlobalPlugin` for direct shortcut into NVDA settings panel.
   - Fixed variable shadowing bug in `_updateNvdaSecondaryChoice` where `_` masked gettext `_()` translation function causing dialog crash.
-  - Performed comprehensive AST, symbol-table, and format-string audits confirming zero errors, and verified 100% mock test suite pass.
-  - Implemented Fast-Path direct device execution in `setConfiguredDevice` and `toggleNvdaOutputWithFeedback`, eliminating redundant active device scans and registry queries.
+  - Code review fixes (2026-09-30): add-on translations now load, saved slots survive disconnection, minimum NVDA 2025.1, connection checks before switching, Core Audio errors routed to the NVDA log, version bumped to 2026.4.
   - `clean-code-guard` verified: all functions in `__init__.py` <= 20 lines.
   - Documentation and translations updated in Arabic and English.

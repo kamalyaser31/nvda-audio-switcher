@@ -114,23 +114,26 @@ def _resolveConfiguredSlot(render, slot):
 
 def _reportSlotFeedback(devType, slot, success):
     if success:
+        # Translators: short message when a default audio device slot is selected.
         msg = _("Done: {deviceType} {slot}").format(deviceType=devType, slot=slot)
         provideFeedback([msg])
     else:
+        # Translators: short message when setting default device fails.
         provideFeedback([], [_("Failed to set device")])
 
 
 def setConfiguredDevice(render=True, slot=1):
     devType, targetValue = _resolveConfiguredSlot(render, slot)
     if not targetValue:
+        # Translators: short message when the requested device slot is empty.
         ui.message(_("Not set"))
         return
     targetId, targetName = parseDeviceConfig(targetValue)
-    if targetId and setDefaultDevice(targetId):
-        _reportSlotFeedback(devType, slot, True)
-        return
+    # Always check the device is connected: IPolicyConfig is undocumented and
+    # may accept the ID of an unplugged endpoint without switching audio.
     target_id = findMatchingDeviceId(getActiveDevices(render), targetId, targetName)
     if not target_id:
+        # Translators: short message when the configured device is unavailable.
         ui.message(_("Not found"))
         return
     _reportSlotFeedback(devType, slot, setDefaultDevice(target_id))
@@ -140,10 +143,14 @@ def getDefaultDeviceMessage(render=True):
     currentName = getDefaultDeviceFriendlyName(render)
     if render:
         if currentName:
+            # Translators: short message announcing the current default speaker.
             return _("Speaker: {device}").format(device=currentName)
+        # Translators: short message when there is no default speaker.
         return _("No speaker")
     if currentName:
+        # Translators: short message announcing the current default microphone.
         return _("Mic: {device}").format(device=currentName)
+    # Translators: short message when there is no default microphone.
     return _("No mic")
 
 
@@ -309,8 +316,10 @@ def _applyEndpoint(endpoint, isSpeaker, success, failure):
     deviceId, name = endpoint
     if setDefaultDevice(deviceId):
         template = (
+            # Translators: confirms a speaker selected in the quick dialog.
             _("Default speaker: {device}")
             if isSpeaker
+            # Translators: confirms a microphone selected in the quick dialog.
             else _("Default microphone: {device}")
         )
         success.append(template.format(device=name))

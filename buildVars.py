@@ -30,13 +30,13 @@ addon_info = AddonInfo(
         "and announces current defaults."
     ),
     # version
-    addon_version="2026.3",
+    addon_version="2026.4",
     # Brief changelog for this version
     # Translators: what's new content for the add-on version to be shown in the add-on store
     addon_changelog=_(
-        "Migrated audio backend to pure Win32 Core Audio via ctypes, eliminating pycaw, comtypes, and temporary disk cache. "
-        "Added one-key cyclic device switching for speakers and microphones with position announcements. "
-        "Added instant hardware mute toggle and mute state announcement for the default microphone."
+        "Added one-key toggling of NVDA's own audio output between the system default and a configured secondary device. "
+        "Added a secondary output selector to the settings panel and quick selection dialog, and a gesture to open the settings directly. "
+        "Saved devices are kept in settings while disconnected, and Arabic translations now load correctly. Requires NVDA 2025.1 or later."
     ),
     # Author(s)
     addon_author="Kamal Yaser <kamalyaser31@gmail.com>",

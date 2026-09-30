@@ -30,6 +30,6 @@
 - [x] Add `script_toggleNvdaOutput` to `GlobalPlugin`.
 - [x] Add `script_openSettings` to `GlobalPlugin` for direct jump to Audio Switcher settings dialog.
 - [x] Fix variable shadowing bug in `_updateNvdaSecondaryChoice` where `_` masked gettext translation function.
-- [x] Implement Fast-Path direct device execution in `setConfiguredDevice`.
+- [x] Apply code review fixes and bump version to 2026.4.
 - [ ] Finalize testing and release packaging with `scons` when authorized.
 

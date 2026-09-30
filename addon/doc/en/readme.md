@@ -1,8 +1,8 @@
 # Audio Switcher
 
 • Author: Kamal Yaser
-• Version: 2026.3
-• Compatibility: NVDA 2024.1 and later
+• Version: 2026.4
+• Compatibility: NVDA 2025.1 and later
 
 Audio Switcher is an NVDA add-on for quickly setting configured Windows audio devices as default. It is designed to be simple and lightweight, avoiding the complexity of other audio control add-ons by focusing solely on quick and reliable device switching.
 
@@ -24,7 +24,7 @@ Audio Switcher is an NVDA add-on for quickly setting configured Windows audio de
 - Pure Win32 Core Audio implementation via ctypes with zero external dependencies and no temporary cache files.
 - Unique hardware ID matching to prevent conflicts between devices with identical names.
 - Numbered labels distinguish connected devices that have identical names.
-- Device lists show only audio devices that are currently connected, with unplugged persistence for saved secondary devices.
+- Device lists show only audio devices that are currently connected; saved devices that are unplugged stay in the settings.
 
 
 ## Settings
@@ -42,7 +42,7 @@ Configure:
 - NVDA Secondary Output Device
 - Feedback type
 
-The add-on uses the device names shown by Windows. Only connected devices appear in its lists. If a configured device is later disconnected, its shortcut will say `Not found`, while saved secondary devices remain preserved in settings as `(saved, not connected)`.
+The add-on uses the device names shown by Windows. Only connected devices appear in its lists. If a configured device is later disconnected, its shortcut will say `Not found`, and it stays saved in the settings, listed as `(saved, not connected)`.
 
 ## Input Gestures
 

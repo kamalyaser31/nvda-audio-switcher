@@ -248,13 +248,13 @@ msgstr ""
 
 #: buildVars.py:36
 msgid ""
-"Migrated audio backend to pure Win32 Core Audio via ctypes, eliminating pycaw, comtypes, and temporary disk cache. "
-"Added one-key cyclic device switching for speakers and microphones with position announcements. "
-"Added instant hardware mute toggle and mute state announcement for the default microphone."
+"Added one-key toggling of NVDA's own audio output between the system default and a configured secondary device. "
+"Added a secondary output selector to the settings panel and quick selection dialog, and a gesture to open the settings directly. "
+"Saved devices are kept in settings while disconnected, and Arabic translations now load correctly. Requires NVDA 2025.1 or later."
 msgstr ""
-"ترحيل البنية التحتية إلى واجهات Win32 Core Audio النقية عبر ctypes، والتخلص التام من pycaw و comtypes والملفات المؤقتة. "
-"وإضافة التبديل الدوري بين السماعات والميكروفونات بنقرة واحدة مع نطق موضع الجهاز. "
-"وإضافة كتم واسترجاع الميكروفون الافتراضي فورياً وإعلان حالة كتمه."
+"إضافة تبديل مخرج صوت NVDA بنقرة واحدة بين الجهاز الافتراضي للنظام وجهاز ثانوي محدد. "
+"وإضافة اختيار الجهاز الثانوي في لوحة الإعدادات وحوار الاختيار السريع، وإيماءة لفتح الإعدادات مباشرة. "
+"وحفظ الأجهزة المهيأة في الإعدادات وإن انفصلت، وإصلاح تحميل الترجمة العربية. وتتطلب الإضافة NVDA 2025.1 أو أحدث."
 
 #, python-brace-format
 msgid "Only one speaker: {device}"

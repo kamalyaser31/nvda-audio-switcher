@@ -2,13 +2,12 @@
 
 All notable changes to the Audio Switcher add-on will be documented in this file.
 
-## [Unreleased]
+## [2026.4] - Unreleased
 
 ### feat: integrate NVDA output toggling and direct settings panel gesture
 - Added one-key toggling between primary and secondary NVDA speech output devices (`script_toggleNvdaOutput`).
 - Added secondary device selector in `AudioDeviceSelectionDialog` and `AudioSwitcherSettingsPanel`.
 - Added direct shortcut to open Audio Switcher settings panel (`script_openSettings`).
-- Implemented Fast-Path direct device execution in `setConfiguredDevice`, eliminating redundant active device scans.
 
 ### fix: resolve gettext translation function shadowing in secondary device choice
 - Fixed variable unpack shadowing `_` translation function causing crash in `AudioDeviceSelectionDialog`.
@@ -20,6 +19,8 @@ All notable changes to the Audio Switcher add-on will be documented in this file
 - Raised minimum NVDA version to 2025.1 (`config.conf["audio"]["outputDevice"]` does not exist earlier).
 - NVDA output toggle: reinitialise tones with the synth so beeps follow the new device, report synth reload failures correctly, and verify the secondary device is connected before switching.
 - Core Audio errors now go to the NVDA log.
+- Configured slot shortcuts check the device is connected before switching, so an unplugged device reliably reports `Not found`.
+- Restored translator comments removed during refactoring.
 - Cycling now starts from the first device when the current default is not an active device.
 - COM is initialised once at import instead of on every call.
 - Quick selection dialog keeps the secondary-output pick on Refresh and is reused instead of opening twice.
