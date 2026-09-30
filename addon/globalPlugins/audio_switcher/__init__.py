@@ -582,7 +582,9 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
         super().__init__(*args, **kwargs)
         # Load and register config spec
         config.conf.spec.update(
-            config.ConfigObj(confspec.splitlines(), encoding="utf-8")
+            # list_values=False keeps "integer(default=0, min=0, max=3)" a
+            # single string, as NVDA does for its own spec.
+            config.ConfigObj(confspec.splitlines(), encoding="utf-8", list_values=False)
         )
         # Append settings panel
         NVDASettingsDialog.categoryClasses.append(AudioSwitcherSettingsPanel)
