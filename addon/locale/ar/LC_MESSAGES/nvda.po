@@ -248,13 +248,13 @@ msgstr ""
 
 #: buildVars.py:36
 msgid ""
-"Migrated audio backend to pure Win32 Core Audio via ctypes, eliminating pycaw, comtypes, and temporary disk cache. "
-"Added one-key cyclic device switching for speakers and microphones with position announcements. "
-"Added instant hardware mute toggle and mute state announcement for the default microphone."
+"Added one-key toggling of NVDA's own audio output between the system default and a configured secondary device. "
+"Added a secondary output selector to the settings panel and quick selection dialog, and a gesture to open the settings directly. "
+"Saved devices are kept in settings while disconnected, and Arabic translations now load correctly. Requires NVDA 2025.1 or later."
 msgstr ""
-"ترحيل البنية التحتية إلى واجهات Win32 Core Audio النقية عبر ctypes، والتخلص التام من pycaw و comtypes والملفات المؤقتة. "
-"وإضافة التبديل الدوري بين السماعات والميكروفونات بنقرة واحدة مع نطق موضع الجهاز. "
-"وإضافة كتم واسترجاع الميكروفون الافتراضي فورياً وإعلان حالة كتمه."
+"إضافة تبديل مخرج صوت NVDA بنقرة واحدة بين الجهاز الافتراضي للنظام وجهاز ثانوي محدد. "
+"وإضافة اختيار الجهاز الثانوي في لوحة الإعدادات وحوار الاختيار السريع، وإيماءة لفتح الإعدادات مباشرة. "
+"وحفظ الأجهزة المهيأة في الإعدادات وإن انفصلت، وإصلاح تحميل الترجمة العربية. وتتطلب الإضافة NVDA 2025.1 أو أحدث."
 
 #, python-brace-format
 msgid "Only one speaker: {device}"
@@ -293,4 +293,59 @@ msgstr "كتم واسترجاع الميكروفون الافتراضي."
 #. Translators: description in Input Gestures dialog.
 msgid "Announce whether default microphone is muted."
 msgstr "إعلان حالة كتم الميكروفون الافتراضي."
+
+msgid "NVDA Secondary &Output Device:"
+msgstr "مخرج صوت NVDA الثا&نوي:"
+
+msgid "NVDA Secondary &Output:"
+msgstr "مخرج صوت NVDA الثا&نوي:"
+
+msgid "None (Not configured)"
+msgstr "لا يوجد (غير محدد)"
+
+#, python-brace-format
+msgid "{device} (saved, not connected)"
+msgstr "{device} (محفوظ، غير متصل)"
+
+msgid "Do not change"
+msgstr "عدم التغيير"
+
+msgid "None (Clear)"
+msgstr "لا يوجد (مسح الإعداد)"
+
+#, python-brace-format
+msgid "{device} (current secondary)"
+msgstr "{device} (الثانوي الحالي)"
+
+#, python-brace-format
+msgid "NVDA: {device}"
+msgstr "NVDA: {device}"
+
+msgid "No secondary device configured for NVDA"
+msgstr "لم يُحدد جهاز ثانوي لـ NVDA"
+
+msgid "NVDA secondary device not connected"
+msgstr "جهاز NVDA الثانوي غير متصل"
+
+msgid "Failed to switch NVDA audio output"
+msgstr "تعذر تبديل مخرج صوت NVDA"
+
+#, python-brace-format
+msgid "NVDA secondary: {device}"
+msgstr "جهاز NVDA الثانوي: {device}"
+
+msgid "NVDA secondary device cleared"
+msgstr "مُسِح جهاز NVDA الثانوي"
+
+#. Translators: description in Input Gestures dialog.
+msgid "Toggle NVDA audio output between Primary and secondary device."
+msgstr "تبديل مخرج صوت NVDA بين الجهاز الأساسي والجهاز الثانوي."
+
+msgid "Primary Device (System Default)"
+msgstr "الجهاز الأساسي (الافتراضي للنظام)"
+
+#. Translators: description in Input Gestures dialog.
+msgid "Open Audio Switcher settings."
+msgstr "فتح إعدادات مبدل أجهزة الصوت."
+
 

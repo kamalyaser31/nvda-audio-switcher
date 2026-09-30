@@ -6,11 +6,21 @@ Replaces pycaw and comtypes with direct zero-dependency Windows API calls.
 
 import ctypes
 from ctypes import wintypes
-import logging
 
-log = logging.getLogger(__name__)
+try:
+    from logHandler import log
+except ImportError:  # Running outside NVDA (e.g. standalone diagnostics).
+    import logging
+
+    log = logging.getLogger(__name__)
 
 ole32 = ctypes.WinDLL("ole32", use_last_error=True)
+
+ole32.CoInitialize.argtypes = [ctypes.c_void_p]
+ole32.CoInitialize.restype = ctypes.c_long
+# NVDA's main thread already has COM initialised; this only covers standalone
+# use, and runs once so the apartment reference count stays bounded.
+ole32.CoInitialize(None)
 
 ole32.CoCreateInstance.argtypes = [
     ctypes.c_void_p,
@@ -108,7 +118,6 @@ def _release(p_interface):
 
 
 def _get_enumerator():
-    ole32.CoInitialize(None)
     p_enum = ctypes.c_void_p()
     hr = ole32.CoCreateInstance(
         ctypes.byref(_CLSID_MMDeviceEnumerator),
@@ -280,7 +289,6 @@ def getDefaultDeviceInfo(render=True):
 
 
 def _create_policy_config():
-    ole32.CoInitialize(None)
     p_policy = ctypes.c_void_p()
     hr = ole32.CoCreateInstance(
         ctypes.byref(_CLSID_CPolicyConfigClient),
@@ -437,7 +445,7 @@ def toggleDefaultMicMute():
 
 
 def cycleNextDevice(render=True):
-    """Cycle to next active audio device, set as default, and return (device, index, total)."""
+    """Set the next active device as default; return (device, index, total)."""
     devices = getActiveDevices(render)
     if not devices:
         return None, 0, 0
@@ -447,7 +455,8 @@ def cycleNextDevice(render=True):
     current = getDefaultDeviceInfo(render)
     current_id = current[0] if current else None
 
-    current_idx = 0
+    # -1 so an inactive/unknown current default cycles to the first device.
+    current_idx = -1
     for idx, (dev_id, _name) in enumerate(devices):
         if dev_id == current_id:
             current_idx = idx

@@ -2,6 +2,30 @@
 
 All notable changes to the Audio Switcher add-on will be documented in this file.
 
+## [2026.4] - Unreleased
+
+### feat: integrate NVDA output toggling and direct settings panel gesture
+- Added one-key toggling between primary and secondary NVDA speech output devices (`script_toggleNvdaOutput`).
+- Added secondary device selector in `AudioDeviceSelectionDialog` and `AudioSwitcherSettingsPanel`.
+- Added direct shortcut to open Audio Switcher settings panel (`script_openSettings`).
+
+### fix: resolve gettext translation function shadowing in secondary device choice
+- Fixed variable unpack shadowing `_` translation function causing crash in `AudioDeviceSelectionDialog`.
+- Completed comprehensive AST audit confirming zero variable shadowing across codebase.
+
+### fix: code review findings
+- Load the add-on's own translations (`addonHandler.initTranslation()`); Arabic strings were never used.
+- Settings panel no longer clears speaker/mic slots whose device is disconnected, renamed, or stored in the old name-only format; such devices are listed as "saved, not connected".
+- Raised minimum NVDA version to 2025.1 (`config.conf["audio"]["outputDevice"]` does not exist earlier).
+- NVDA output toggle: reinitialise tones with the synth so beeps follow the new device, report synth reload failures correctly, and verify the secondary device is connected before switching.
+- Core Audio errors now go to the NVDA log.
+- Configured slot shortcuts check the device is connected before switching, so an unplugged device reliably reports `Not found`.
+- Restored translator comments removed during refactoring.
+- Cycling now starts from the first device when the current default is not an active device.
+- COM is initialised once at import instead of on every call.
+- Quick selection dialog keeps the secondary-output pick on Refresh and is reused instead of opening twice.
+- `feedbackType` is bounded to 0–3 in the config spec.
+
 ## [2026.3] - 2026-09-24
 
 ### feat: add cyclic device switching and instant default mic mute controls
