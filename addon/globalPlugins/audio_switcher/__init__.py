@@ -1,4 +1,5 @@
 import wx
+import addonHandler
 import globalPluginHandler
 import gui
 import config
@@ -17,6 +18,8 @@ from .core_audio import (
     cycleNextDevice,
 )
 
+addonHandler.initTranslation()
+
 confspec = """
 [audioSwitcher]
 micDevice1 = string(default="")
@@ -25,7 +28,7 @@ micDevice3 = string(default="")
 speakerDevice1 = string(default="")
 speakerDevice2 = string(default="")
 speakerDevice3 = string(default="")
-feedbackType = integer(default=0)
+feedbackType = integer(default=0, min=0, max=3)
 nvdaSecondaryOutput = string(default="")
 """
 
@@ -212,20 +215,21 @@ def getNvdaCurrentOutputDeviceId():
         return "default"
 
 
-def forceSynthReload():
-    if hasattr(synthDriverHandler, "handleConfigChange"):
-        try:
-            synthDriverHandler.handleConfigChange()
-            return True
-        except Exception as e:
-            log.error("AudioSwitcher: handleConfigChange failed: %s", e)
+def _reloadSynth():
     try:
-        synth = config.conf["speech"]["synth"]
-        synthDriverHandler.setSynth(synth)
-        return True
+        return bool(synthDriverHandler.setSynth(synthDriverHandler.getSynth().name))
     except Exception as e:
-        log.critical("AudioSwitcher: setSynth fallback failed: %s", e)
+        log.error("AudioSwitcher: setSynth failed: %s", e)
         return False
+
+
+def forceSynthReload():
+    """Reopen the synth and tones players so they pick up the new output device."""
+    tones.terminate()
+    try:
+        return _reloadSynth()
+    finally:
+        tones.initialize()
 
 
 def safeSetNvdaOutputDevice(newDeviceId):
@@ -274,9 +278,8 @@ def _switchToDefaultOutput():
 
 
 def _switchToSecondaryOutput(targetId, targetName):
-    if targetId and safeSetNvdaOutputDevice(targetId):
-        _playNvdaOutputFeedback(targetName or targetId)
-        return
+    # NVDA falls back to the default device silently on a stale ID, so verify
+    # the device is connected before switching.
     active = getActiveDevices(render=True)
     matchedId = findMatchingDeviceId(active, targetId, targetName)
     if not matchedId:
@@ -391,21 +394,29 @@ class AudioDeviceSelectionDialog(wx.Dialog):
         self._updateNvdaSecondaryChoice()
 
     def _updateNvdaSecondaryChoice(self):
+        previous = self._getSecondaryValue()
         configured = config.conf["audioSwitcher"]["nvdaSecondaryOutput"]
         targetId, _targetName = parseDeviceConfig(configured)
         choices = [_("Do not change"), _("None (Clear)")]
         self.nvdaSecondaryValues = [None, ""]
-        if self.speakerDevices:
-            names = getDisambiguatedDeviceNames(self.speakerDevices)
-            for (dev_id, name), displayName in zip(self.speakerDevices, names):
-                self.nvdaSecondaryValues.append(f"{dev_id}|{name}")
-                if dev_id == targetId:
-                    template = _("{device} (current secondary)")
-                    choices.append(template.format(device=displayName))
-                else:
-                    choices.append(displayName)
+        names = getDisambiguatedDeviceNames(self.speakerDevices)
+        for (dev_id, name), displayName in zip(self.speakerDevices, names):
+            self.nvdaSecondaryValues.append(f"{dev_id}|{name}")
+            if dev_id == targetId:
+                template = _("{device} (current secondary)")
+                choices.append(template.format(device=displayName))
+            else:
+                choices.append(displayName)
         self.nvdaSecondaryChoice.Set(choices)
-        self.nvdaSecondaryChoice.SetSelection(0)
+        values = self.nvdaSecondaryValues
+        self.nvdaSecondaryChoice.SetSelection(
+            values.index(previous) if previous in values else 0
+        )
+
+    def _getSecondaryValue(self):
+        selIndex = self.nvdaSecondaryChoice.GetSelection()
+        values = getattr(self, "nvdaSecondaryValues", [])
+        return values[selIndex] if 0 < selIndex < len(values) else None
 
     def _updateSpeakerChoice(self, selectedId):
         current = getDefaultDeviceInfo(render=True)
@@ -456,12 +467,10 @@ class AudioDeviceSelectionDialog(wx.Dialog):
 
     def getSelections(self):
         """Return explicitly selected endpoints and optional secondary device update."""
-        selIndex = self.nvdaSecondaryChoice.GetSelection()
-        secondaryVal = self.nvdaSecondaryValues[selIndex] if selIndex > 0 else None
         return (
             self._getSelection(self.speakerChoice, self.speakerDevices),
             self._getSelection(self.microphoneChoice, self.microphoneDevices),
-            secondaryVal,
+            self._getSecondaryValue(),
         )
 
     @staticmethod
@@ -477,104 +486,65 @@ class AudioDeviceSelectionDialog(wx.Dialog):
         return selection[0] if selection else None
 
 
+def _findConfiguredIndex(activeDevices, targetId, targetName):
+    for index, (devId, name) in enumerate(activeDevices, start=1):
+        if devId == targetId or (not targetId and name == targetName):
+            return index
+    return 0
+
+
+def buildDeviceChoices(activeDevices, configuredValue, noneLabel):
+    """Return (values, labels, selection), keeping a saved but absent device."""
+    targetId, targetName = parseDeviceConfig(configuredValue)
+    values = [""] + [f"{devId}|{name}" for devId, name in activeDevices]
+    labels = [noneLabel] + getDisambiguatedDeviceNames(activeDevices)
+    selection = _findConfiguredIndex(activeDevices, targetId, targetName)
+    if configuredValue and not selection:
+        template = _("{device} (saved, not connected)")
+        values.append(configuredValue)
+        labels.append(template.format(device=targetName or targetId))
+        selection = len(values) - 1
+    return values, labels, selection
+
+
 class AudioSwitcherSettingsPanel(SettingsPanel):
     title = _("Audio Switcher")
 
-    def _prepareDeviceChoices(self, activeDevices, emptyLabel):
-        """Prepares values list (id|name) and display choices list for wx.Choice."""
-        values = [""]
-        if not activeDevices:
-            return values, [emptyLabel]
-        choices = [""] + getDisambiguatedDeviceNames(activeDevices)
-
-        for dev_id, name in activeDevices:
-            values.append(f"{dev_id}|{name}")
-        return values, choices
-
     def makeSettings(self, settingsSizer):
         sHelper = gui.guiHelper.BoxSizerHelper(self, sizer=settingsSizer)
-        playbackDevices = getActiveDevices(render=True)
-        captureDevices = getActiveDevices(render=False)
-        cfg = config.conf["audioSwitcher"]
-        self.speakerValues, self.speakerChoices = self._prepareDeviceChoices(
-            playbackDevices, _("No connected speakers")
-        )
-        self.micValues, self.micChoices = self._prepareDeviceChoices(
-            captureDevices, _("No connected microphones")
-        )
-        self._addSpeakerSettings(sHelper, cfg)
-        self._addMicrophoneSettings(sHelper, cfg)
-        self._addNvdaOutputSettings(sHelper, cfg)
-        self._addFeedbackSettings(sHelper, cfg)
-
-    def _prepareNvdaSecondaryChoices(self, activeDevices, configuredValue):
-        values = [""]
-        choices = [_("None (Not configured)")]
-        targetId, targetName = parseDeviceConfig(configuredValue)
-        matched = False
-        if activeDevices:
-            names = getDisambiguatedDeviceNames(activeDevices)
-            for (dev_id, name), displayName in zip(activeDevices, names):
-                values.append(f"{dev_id}|{name}")
-                choices.append(displayName)
-                if dev_id == targetId or (not targetId and name == targetName):
-                    matched = True
-        if configuredValue and not matched and targetName:
-            values.append(configuredValue)
-            template = _("{device} (saved, not connected)")
-            choices.append(template.format(device=targetName))
-        return values, choices
-
-    def _addNvdaOutputSettings(self, sHelper, cfg):
-        configured = cfg["nvdaSecondaryOutput"]
         playback = getActiveDevices(render=True)
-        self.nvdaOutputValues, self.nvdaOutputChoices = (
-            self._prepareNvdaSecondaryChoices(playback, configured)
-        )
-        self.nvdaOutputChoice = sHelper.addLabeledControl(
+        capture = getActiveDevices(render=False)
+        # (config key, wx.Choice, values) for every device control.
+        self.deviceControls = []
+        speakerLabels = (_("&Speaker 1:"), _("S&peaker 2:"), _("Sp&eaker 3:"))
+        micLabels = (_("&Microphone 1:"), _("M&icrophone 2:"), _("Mi&crophone 3:"))
+        speakerEmpty = "" if playback else _("No connected speakers")
+        micEmpty = "" if capture else _("No connected microphones")
+        self._addSlotControls(sHelper, "speaker", speakerLabels, playback, speakerEmpty)
+        self._addSlotControls(sHelper, "mic", micLabels, capture, micEmpty)
+        self._addDeviceControl(
+            sHelper,
+            "nvdaSecondaryOutput",
             _("NVDA Secondary &Output Device:"),
-            wx.Choice,
-            choices=self.nvdaOutputChoices,
+            playback,
+            _("None (Not configured)"),
         )
-        self._selectConfiguredDevice(
-            self.nvdaOutputChoice, configured, self.nvdaOutputValues
-        )
+        self._addFeedbackSettings(sHelper)
 
-    def _addSpeakerSettings(self, sHelper, cfg):
-        definitions = (
-            (_("&Speaker 1:"), cfg["speakerDevice1"]),
-            (_("S&peaker 2:"), cfg["speakerDevice2"]),
-            (_("Sp&eaker 3:"), cfg["speakerDevice3"]),
-        )
-        (
-            self.speakerDevice1Choice,
-            self.speakerDevice2Choice,
-            self.speakerDevice3Choice,
-        ) = self._addDeviceChoices(
-            sHelper, self.speakerChoices, self.speakerValues, definitions
-        )
+    def _addSlotControls(self, sHelper, prefix, labels, devices, noneLabel):
+        for slot, label in enumerate(labels, start=1):
+            key = f"{prefix}Device{slot}"
+            self._addDeviceControl(sHelper, key, label, devices, noneLabel)
 
-    def _addMicrophoneSettings(self, sHelper, cfg):
-        definitions = (
-            (_("&Microphone 1:"), cfg["micDevice1"]),
-            (_("M&icrophone 2:"), cfg["micDevice2"]),
-            (_("Mi&crophone 3:"), cfg["micDevice3"]),
-        )
-        self.micDevice1Choice, self.micDevice2Choice, self.micDevice3Choice = (
-            self._addDeviceChoices(
-                sHelper, self.micChoices, self.micValues, definitions
-            )
-        )
+    def _addDeviceControl(self, sHelper, key, label, devices, noneLabel):
+        configured = config.conf["audioSwitcher"][key]
+        values, labels, selection = buildDeviceChoices(devices, configured, noneLabel)
+        choice = sHelper.addLabeledControl(label, wx.Choice, choices=labels)
+        choice.SetSelection(selection)
+        choice.Enable(len(values) > 1)
+        self.deviceControls.append((key, choice, values))
 
-    def _addDeviceChoices(self, sHelper, choices, values, definitions):
-        choiceControls = []
-        for label, configuredValue in definitions:
-            choice = sHelper.addLabeledControl(label, wx.Choice, choices=choices)
-            self._selectConfiguredDevice(choice, configuredValue, values)
-            choiceControls.append(choice)
-        return choiceControls
-
-    def _addFeedbackSettings(self, sHelper, cfg):
+    def _addFeedbackSettings(self, sHelper):
         self.feedbackChoices = [
             _("Beep and Speech"),
             _("Speech Only"),
@@ -584,32 +554,13 @@ class AudioSwitcherSettingsPanel(SettingsPanel):
         self.feedbackTypeChoice = sHelper.addLabeledControl(
             _("Feedback &Type:"), wx.Choice, choices=self.feedbackChoices
         )
-        self.feedbackTypeChoice.SetSelection(cfg["feedbackType"])
-
-    def _selectConfiguredDevice(self, choiceControl, value, valuesList):
-        choiceControl.Enable(len(valuesList) > 1)
-        if value in valuesList:
-            choiceControl.SetSelection(valuesList.index(value))
-        else:
-            choiceControl.SetSelection(0)
+        feedback = config.conf["audioSwitcher"]["feedbackType"]
+        self.feedbackTypeChoice.SetSelection(feedback)
 
     def onSave(self):
         cfg = config.conf["audioSwitcher"]
-        cfg["speakerDevice1"] = self.speakerValues[
-            self.speakerDevice1Choice.GetSelection()
-        ]
-        cfg["speakerDevice2"] = self.speakerValues[
-            self.speakerDevice2Choice.GetSelection()
-        ]
-        cfg["speakerDevice3"] = self.speakerValues[
-            self.speakerDevice3Choice.GetSelection()
-        ]
-        cfg["micDevice1"] = self.micValues[self.micDevice1Choice.GetSelection()]
-        cfg["micDevice2"] = self.micValues[self.micDevice2Choice.GetSelection()]
-        cfg["micDevice3"] = self.micValues[self.micDevice3Choice.GetSelection()]
-        cfg["nvdaSecondaryOutput"] = self.nvdaOutputValues[
-            self.nvdaOutputChoice.GetSelection()
-        ]
+        for key, choice, values in self.deviceControls:
+            cfg[key] = values[choice.GetSelection()]
         cfg["feedbackType"] = self.feedbackTypeChoice.GetSelection()
 
 
@@ -650,19 +601,30 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
     def script_chooseDefaultAudioDevices(self, gesture):
         wx.CallAfter(self._showAudioDeviceSelectionDialog)
 
+    _selectionDialog = None
+
     def _showAudioDeviceSelectionDialog(self):
+        if self._selectionDialog:
+            self._selectionDialog.Raise()
+            return
         gui.mainFrame.prePopup()
         try:
-            dialog = AudioDeviceSelectionDialog(gui.mainFrame)
-            try:
-                if dialog.ShowModal() != wx.ID_OK:
-                    return
-                speaker, microphone, secondary = dialog.getSelections()
-            finally:
-                dialog.Destroy()
+            self._selectionDialog = AudioDeviceSelectionDialog(gui.mainFrame)
+            selections = self._runSelectionDialog(self._selectionDialog)
         finally:
+            self._selectionDialog = None
             gui.mainFrame.postPopup()
-        applyDeviceSelections(speaker, microphone, secondary)
+        if selections:
+            applyDeviceSelections(*selections)
+
+    @staticmethod
+    def _runSelectionDialog(dialog):
+        try:
+            if dialog.ShowModal() != wx.ID_OK:
+                return None
+            return dialog.getSelections()
+        finally:
+            dialog.Destroy()
 
     @script(
         # Translators: description in Input Gestures dialog.
