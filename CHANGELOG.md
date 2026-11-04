@@ -2,7 +2,7 @@
 
 All notable changes to the Audio Switcher add-on will be documented in this file.
 
-## [2026.5] - Unreleased
+## [2026.5] - 2026-11-04
 
 ### feat: audio profiles
 - Added three named profiles; each can set the default speaker, the default microphone, and NVDA's output device, and is activated by its own gesture (`script_activateProfile1`-`3`).
