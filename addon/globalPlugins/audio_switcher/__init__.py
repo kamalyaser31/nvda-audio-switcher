@@ -17,6 +17,7 @@ from .core_audio import (
     toggleDefaultMicMute,
     cycleNextDevice,
 )
+from . import profiles
 
 addonHandler.initTranslation()
 
@@ -30,7 +31,7 @@ speakerDevice2 = string(default="")
 speakerDevice3 = string(default="")
 feedbackType = integer(default=0, min=0, max=3)
 nvdaSecondaryOutput = string(default="")
-"""
+""" + profiles.profileConfspec() + "\n"
 
 
 def parseDeviceConfig(value):
@@ -347,6 +348,73 @@ def applyDeviceSelections(speaker, microphone, secondaryDevice=None):
     _applyEndpoint(microphone, False, success, failure)
     _applySecondaryDevice(secondaryDevice, success)
     provideFeedback(success, failure)
+
+
+def matchConfigured(active, value):
+    return findMatchingDeviceId(active, *parseDeviceConfig(value))
+
+
+def profileName(n):
+    name = config.conf["audioSwitcher"][profiles.profileKey(n, "Name")].strip()
+    # Translators: name of a profile left unnamed; {n} is its number.
+    return name or _("Profile {n}").format(n=n)
+
+
+def readProfile(n):
+    cfg = config.conf["audioSwitcher"]
+    return {
+        field: cfg[profiles.profileKey(n, field)] for field in profiles.DEVICE_FIELDS
+    }
+
+
+def _applyProfileEndpoint(deviceId, failureMessage, failures):
+    if deviceId is None:
+        return False
+    if setDefaultDevice(deviceId):
+        return True
+    failures.append(failureMessage)
+    return False
+
+
+def _applyProfileNvda(nvdaId, failures):
+    if nvdaId is None:
+        return False
+    # Already there: skip the synth reload so speech is not cut for nothing.
+    if nvdaId == getNvdaCurrentOutputDeviceId():
+        return True
+    if safeSetNvdaOutputDevice(nvdaId):
+        return True
+    failures.append(_("Failed to switch NVDA audio output"))
+    return False
+
+
+def _resolveProfile(n):
+    return profiles.resolveProfile(
+        readProfile(n),
+        getActiveDevices(render=True),
+        getActiveDevices(render=False),
+        matchConfigured,
+    )
+
+
+def activateProfile(n):
+    name = profileName(n)
+    res = _resolveProfile(n)
+    if res.isEmpty:
+        # Translators: spoken when a profile with no devices is activated.
+        ui.message(_("{name} is not configured").format(name=name))
+        return
+    failures = []
+    applied = [
+        _applyProfileEndpoint(res.speakerId, _("Failed to set speaker"), failures),
+        _applyProfileEndpoint(res.micId, _("Failed to set microphone"), failures),
+        _applyProfileNvda(res.nvdaId, failures),
+    ]
+    if res.missing:
+        # Translators: lists profile devices that are unplugged.
+        missingMsg = _("Not connected: {devices}")
+        failures.insert(0, missingMsg.format(devices=", ".join(res.missing)))
+    provideFeedback([name] if any(applied) else [], failures)
 
 
 class AudioDeviceSelectionDialog(wx.Dialog):
@@ -734,3 +802,24 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
     )
     def script_toggleNvdaOutput(self, gesture):
         toggleNvdaOutputWithFeedback()
+
+    @script(
+        # Translators: description in Input Gestures dialog.
+        description=_("Activate profile 1.")
+    )
+    def script_activateProfile1(self, gesture):
+        activateProfile(1)
+
+    @script(
+        # Translators: description in Input Gestures dialog.
+        description=_("Activate profile 2.")
+    )
+    def script_activateProfile2(self, gesture):
+        activateProfile(2)
+
+    @script(
+        # Translators: description in Input Gestures dialog.
+        description=_("Activate profile 3.")
+    )
+    def script_activateProfile3(self, gesture):
+        activateProfile(3)
