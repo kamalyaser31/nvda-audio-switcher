@@ -4,7 +4,7 @@
 Audio Switcher is an NVDA screen reader add-on created by Kamal Yaser that sets configured or directly selected speakers and microphones as default and announces current defaults.
 
 ## Architecture & Tech Stack
-- **Version:** 2026.4
+- **Version:** 2026.5 (branch `feat/profiles`, not merged; 2026.4 is the published release)
 - **Runtime:** Python 3 (NVDA 2025.1+ required, tested up to NVDA 2026.1).
 - **Core Audio Backend (`core_audio.py`):** Pure Win32 Core Audio using standard `ctypes` and raw COM VTables:
   - `MMDeviceEnumerator`: audio endpoint enumeration (`getActiveDevices`) and default device queries (`getDefaultDeviceInfo`).
@@ -17,6 +17,7 @@ Audio Switcher is an NVDA screen reader add-on created by Kamal Yaser that sets 
   - `GlobalPlugin`: NVDA scripts and gestures.
   - `AudioDeviceSelectionDialog`: wxPython quick selection dialog.
   - `AudioSwitcherSettingsPanel`: NVDA settings categories panel.
+- **Profiles (`profiles.py`):** pure logic with no NVDA imports (`resolveProfile`, `currentDevicesAsProfile`, `profileConfspec`), tested by `run_tests.py` at the root. Config keys `profile{n}Name|Speaker|Mic|Nvda` for n = 1-3; `""` means no change, `Nvda` may be `"default"`.
   - Zero external dependencies: no `pycaw`, no `comtypes`, no temp disk cache.
 
 ## Current Progress & Release Status
@@ -27,8 +28,8 @@ Audio Switcher is an NVDA screen reader add-on created by Kamal Yaser that sets 
 - All 16 legacy `pycaw/` files removed.
 - GitHub Release v2026.3 published with `audioSwitcher-2026.3.nvda-addon`.
 - Registration issue #11776 submitted to NVDA Add-on Store (`nvaccess/addon-datastore`).
-- 2026.4 merged into `master` and published; branch `feat/nvda-output-toggle` is merged and can be deleted.
-- Pending: 2026.5 (three profiles; quick dialog NVDA field switches output), design approved in `docs/superpowers/specs/2026-11-03-profiles-design.md`, plan in `docs/superpowers/plans/2026-11-03-profiles.md`.
+- 2026.4 published (store #11897, 2026-09-30); branch `feat/nvda-output-toggle` deleted.
+- 2026.5 implemented on `feat/profiles` (three profiles; quick dialog NVDA field switches output), built as `audioSwitcher-2026.5.nvda-addon`; awaiting live NVDA test and Kamal's confirmation before merge. Design and plan in `docs/superpowers/`.
 - Decision: open number of profiles rejected, because NVDA Input Gestures lists only scripts defined in advance; three fixed profiles instead.
 - 2026.4 contents (from `feat/nvda-output-toggle`):
   - Integrated NVDA output toggling feature (merged from `audioToggler`/`nvdaOutputToggler`).
