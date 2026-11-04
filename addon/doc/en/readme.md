@@ -1,7 +1,7 @@
 # Audio Switcher
 
 • Author: Kamal Yaser
-• Version: 2026.4
+• Version: 2026.5
 • Compatibility: NVDA 2025.1 and later
 
 Audio Switcher is an NVDA add-on for quickly setting configured Windows audio devices as default. It is designed to be simple and lightweight, avoiding the complexity of other audio control add-ons by focusing solely on quick and reliable device switching.
@@ -13,6 +13,7 @@ Audio Switcher is an NVDA add-on for quickly setting configured Windows audio de
 - Instant hardware kernel mute toggle for the default microphone with distinct audio tones and concise speech.
 - Announce current default microphone mute state without altering it.
 - Toggle NVDA audio output between Primary (System Default) and a configured secondary output device with a single keystroke.
+- Activate one of three named profiles with one key: each profile can set the speaker, the microphone, and NVDA's own output device together, and announces only its name.
 - Set one of three speaker/output devices as default.
 - Set one of three microphone/input devices as default.
 - Announce the current default speaker.
@@ -40,6 +41,7 @@ Configure:
 - Microphone 2
 - Microphone 3
 - NVDA Secondary Output Device
+- Profiles: choose Profile 1, 2, or 3, then set its name, speaker, microphone, and NVDA output. Each device field starts with **No change**. The NVDA output field also offers **System default**. **Save current devices to profile** fills the fields with the devices in use now; nothing is saved until you press OK or Apply.
 - Feedback type
 
 The add-on uses the device names shown by Windows. Only connected devices appear in its lists. If a configured device is later disconnected, its shortcut will say `Not found`, and it stays saved in the settings, listed as `(saved, not connected)`.
@@ -66,5 +68,10 @@ Available actions:
 - Announce current default speaker and microphone
 - Choose default audio devices
 - Open Audio Switcher settings
+- Activate profile 1
+- Activate profile 2
+- Activate profile 3
 
-The quick selection dialog lists connected speakers and microphones separately, along with the NVDA secondary output device. Each list starts with a **Do not change** choice, so selecting a device in one list never changes the other device type unless you select it explicitly. **Refresh devices** preserves a selected device while it remains connected and resets only a selection whose device disappeared. Empty lists state that no connected devices are available and are disabled.
+The quick selection dialog lists connected speakers and microphones separately, along with the NVDA secondary output device. Each list starts with a **Do not change** choice, so selecting a device in one list never changes the other device type unless you select it explicitly. **Refresh devices** preserves a selected device while it remains connected and resets only a selection whose device disappeared. Empty lists state that no connected devices are available and are disabled. Choosing a device in the NVDA list saves it as the secondary device and moves NVDA speech to it at once; choosing **None (Clear)** returns NVDA to the system default if NVDA was speaking on the cleared device.
+
+When a profile is activated and one of its devices is unplugged, the other devices still switch and the add-on says which device is not connected.

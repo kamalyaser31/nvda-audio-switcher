@@ -30,7 +30,7 @@ addon_info = AddonInfo(
         "and announces current defaults."
     ),
     # version
-    addon_version="2026.4",
+    addon_version="2026.5",
     # Brief changelog for this version
     # Translators: what's new content for the add-on version to be shown in the add-on store
     addon_changelog=_(

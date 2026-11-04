@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 'audioSwitcher' '2026.2'\n"
 "Report-Msgid-Bugs-To: 'nvda-translations@groups.io'\n"
-"POT-Creation-Date: 2026-08-08 13:59+0300\n"
+"POT-Creation-Date: 2026-11-04 09:16+0200\n"
 "PO-Revision-Date: 2026-08-08 14:02+0300\n"
 "Last-Translator: Kamal Yaser\n"
 "Language-Team: Arabic <LL@li.org>\n"
@@ -16,229 +16,432 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: addon\globalPlugins\audio_switcher\__init__.py:183
+#: addon\globalPlugins\audio_switcher\__init__.py:111
 msgid "speaker"
 msgstr "السماعة"
 
-#: addon\globalPlugins\audio_switcher\__init__.py:186
+#: addon\globalPlugins\audio_switcher\__init__.py:111
 msgid "mic"
 msgstr "الميكروفون"
 
-#. Translators: short message when the requested device slot is empty.
-#: addon\globalPlugins\audio_switcher\__init__.py:192
-msgid "Not set"
-msgstr "غير مهيأ"
-
-#. Translators: short message when the configured device is unavailable.
-#: addon\globalPlugins\audio_switcher\__init__.py:202
-msgid "Not found"
-msgstr "تعذر العثور على الجهاز"
-
 #. Translators: short message when a default audio device slot is selected.
-#: addon\globalPlugins\audio_switcher\__init__.py:207
+#: addon\globalPlugins\audio_switcher\__init__.py:119
 #, python-brace-format
 msgid "Done: {deviceType} {slot}"
 msgstr "تم تعيين: {deviceType} {slot}"
 
 #. Translators: short message when setting default device fails.
-#: addon\globalPlugins\audio_switcher\__init__.py:214
+#: addon\globalPlugins\audio_switcher\__init__.py:123
+#: addon\globalPlugins\audio_switcher\__init__.py:176
 msgid "Failed to set device"
 msgstr "تعذر تفعيل الجهاز"
 
+#. Translators: short message when the requested device slot is empty.
+#: addon\globalPlugins\audio_switcher\__init__.py:130
+msgid "Not set"
+msgstr "غير مهيأ"
+
+#. Translators: short message when the configured device is unavailable.
+#: addon\globalPlugins\audio_switcher\__init__.py:138
+msgid "Not found"
+msgstr "تعذر العثور على الجهاز"
+
 #. Translators: short message announcing the current default speaker.
-#: addon\globalPlugins\audio_switcher\__init__.py:222
+#: addon\globalPlugins\audio_switcher\__init__.py:148
 #, python-brace-format
 msgid "Speaker: {device}"
 msgstr "السماعة: {device}"
 
 #. Translators: short message when there is no default speaker.
-#: addon\globalPlugins\audio_switcher\__init__.py:224
+#: addon\globalPlugins\audio_switcher\__init__.py:150
 msgid "No speaker"
 msgstr "لا توجد سماعة"
 
 #. Translators: short message announcing the current default microphone.
-#: addon\globalPlugins\audio_switcher\__init__.py:227
+#: addon\globalPlugins\audio_switcher\__init__.py:153
 #, python-brace-format
 msgid "Mic: {device}"
 msgstr "الميكروفون: {device}"
 
 #. Translators: short message when there is no default microphone.
-#: addon\globalPlugins\audio_switcher\__init__.py:229
+#: addon\globalPlugins\audio_switcher\__init__.py:155
+#: addon\globalPlugins\audio_switcher\__init__.py:201
+#: addon\globalPlugins\audio_switcher\__init__.py:213
 msgid "No mic"
 msgstr "لا يوجد ميكروفون"
 
+#: addon\globalPlugins\audio_switcher\__init__.py:173
+#: addon\globalPlugins\audio_switcher\__init__.py:530
+#: addon\globalPlugins\audio_switcher\__init__.py:640
+msgid "No connected speakers"
+msgstr "لا توجد سماعات متصلة"
+
+#: addon\globalPlugins\audio_switcher\__init__.py:173
+#: addon\globalPlugins\audio_switcher\__init__.py:543
+#: addon\globalPlugins\audio_switcher\__init__.py:641
+msgid "No connected microphones"
+msgstr "لا توجد ميكروفونات متصلة"
+
+#: addon\globalPlugins\audio_switcher\__init__.py:186
+#, python-brace-format
+msgid "Only one speaker: {device}"
+msgstr "لا توجد سوى سماعة واحدة: {device}"
+
+#: addon\globalPlugins\audio_switcher\__init__.py:186
+#, python-brace-format
+msgid "Only one mic: {device}"
+msgstr "لا يوجد سوى ميكروفون واحد: {device}"
+
+#: addon\globalPlugins\audio_switcher\__init__.py:191
+#, python-brace-format
+msgid "Speaker: {device} ({index} of {total})"
+msgstr "السماعة: {device} ({index} من {total})"
+
+#: addon\globalPlugins\audio_switcher\__init__.py:193
+#, python-brace-format
+msgid "Mic: {device} ({index} of {total})"
+msgstr "الميكروفون: {device} ({index} من {total})"
+
+#: addon\globalPlugins\audio_switcher\__init__.py:207
+#: addon\globalPlugins\audio_switcher\__init__.py:215
+msgid "Mic muted"
+msgstr "الميكروفون مكتوم"
+
+#: addon\globalPlugins\audio_switcher\__init__.py:207
+#: addon\globalPlugins\audio_switcher\__init__.py:215
+msgid "Mic on"
+msgstr "الميكروفون يعمل"
+
+#: addon\globalPlugins\audio_switcher\__init__.py:265
+#: addon\globalPlugins\audio_switcher\__init__.py:336
+#, python-brace-format
+msgid "NVDA: {device}"
+msgstr "NVDA: {device}"
+
+#: addon\globalPlugins\audio_switcher\__init__.py:277
+#: addon\globalPlugins\audio_switcher\__init__.py:283
+#: addon\globalPlugins\audio_switcher\__init__.py:365
+msgid "Primary Device (System Default)"
+msgstr "الجهاز الأساسي (الافتراضي للنظام)"
+
+#: addon\globalPlugins\audio_switcher\__init__.py:285
+#: addon\globalPlugins\audio_switcher\__init__.py:299
+#: addon\globalPlugins\audio_switcher\__init__.py:338
+#: addon\globalPlugins\audio_switcher\__init__.py:412
+msgid "Failed to switch NVDA audio output"
+msgstr "تعذر تبديل مخرج صوت NVDA"
+
+#: addon\globalPlugins\audio_switcher\__init__.py:294
+#: addon\globalPlugins\audio_switcher\__init__.py:346
+msgid "NVDA secondary device not connected"
+msgstr "جهاز NVDA الثانوي غير متصل"
+
+#: addon\globalPlugins\audio_switcher\__init__.py:306
+msgid "No secondary device configured for NVDA"
+msgstr "لم يُحدد جهاز ثانوي لـ NVDA"
+
 #. Translators: confirms a speaker selected in the quick dialog.
-#: addon\globalPlugins\audio_switcher\__init__.py:251
+#: addon\globalPlugins\audio_switcher\__init__.py:321
 #, python-brace-format
 msgid "Default speaker: {device}"
 msgstr "السماعة الافتراضية: {device}"
 
-#: addon\globalPlugins\audio_switcher\__init__.py:253
-msgid "Failed to set speaker"
-msgstr "تعذر تعيين السماعة"
-
 #. Translators: confirms a microphone selected in the quick dialog.
-#: addon\globalPlugins\audio_switcher\__init__.py:258
+#: addon\globalPlugins\audio_switcher\__init__.py:324
 #, python-brace-format
 msgid "Default microphone: {device}"
 msgstr "الميكروفون الافتراضي: {device}"
 
-#: addon\globalPlugins\audio_switcher\__init__.py:261
+#: addon\globalPlugins\audio_switcher\__init__.py:329
+#: addon\globalPlugins\audio_switcher\__init__.py:434
+msgid "Failed to set speaker"
+msgstr "تعذر تعيين السماعة"
+
+#: addon\globalPlugins\audio_switcher\__init__.py:329
+#: addon\globalPlugins\audio_switcher\__init__.py:435
 msgid "Failed to set microphone"
 msgstr "تعذر تعيين الميكروفون"
 
-#: addon\globalPlugins\audio_switcher\__init__.py:269
-msgid "Choose default audio devices"
-msgstr "اختيار أجهزة الصوت الافتراضية"
+#: addon\globalPlugins\audio_switcher\__init__.py:362
+msgid "NVDA secondary device cleared"
+msgstr "مُسِح جهاز NVDA الثانوي"
 
-#: addon\globalPlugins\audio_switcher\__init__.py:277
-msgid "&Speakers:"
-msgstr "ال&سماعات:"
+#. Translators: name of a profile left unnamed; {n} is its number.
+#: addon\globalPlugins\audio_switcher\__init__.py:385
+#: addon\globalPlugins\audio_switcher\__init__.py:697
+#, python-brace-format
+msgid "Profile {n}"
+msgstr "الوضع {n}"
 
-#: addon\globalPlugins\audio_switcher\__init__.py:283
-msgid "&Microphones:"
-msgstr "ال&ميكروفونات:"
+#. Translators: spoken when a profile with no devices is activated.
+#: addon\globalPlugins\audio_switcher\__init__.py:430
+#, python-brace-format
+msgid "{name} is not configured"
+msgstr "{name} غير مهيأ"
 
-#: addon\globalPlugins\audio_switcher\__init__.py:289
+#. Translators: lists profile devices that are unplugged.
+#: addon\globalPlugins\audio_switcher\__init__.py:440
+#, python-brace-format
+msgid "Not connected: {devices}"
+msgstr "غير متصل: {devices}"
+
+#: addon\globalPlugins\audio_switcher\__init__.py:450
 msgid "&Refresh devices"
 msgstr "ت&حديث الأجهزة"
 
-#: addon\globalPlugins\audio_switcher\__init__.py:292
+#: addon\globalPlugins\audio_switcher\__init__.py:453
 msgid "&Apply"
 msgstr "&تطبيق"
 
+#: addon\globalPlugins\audio_switcher\__init__.py:461
+msgid "Choose default audio devices"
+msgstr "اختيار أجهزة الصوت الافتراضية"
+
+#: addon\globalPlugins\audio_switcher\__init__.py:467
+msgid "&Speakers:"
+msgstr "ال&سماعات:"
+
+#: addon\globalPlugins\audio_switcher\__init__.py:470
+msgid "&Microphones:"
+msgstr "ال&ميكروفونات:"
+
+#: addon\globalPlugins\audio_switcher\__init__.py:473
+msgid "NVDA Secondary &Output:"
+msgstr "مخرج صوت NVDA الثا&نوي:"
+
 #. Translators: spoken after refreshing the quick device-selection dialog.
-#: addon\globalPlugins\audio_switcher\__init__.py:308
+#: addon\globalPlugins\audio_switcher\__init__.py:485
 msgid "Audio devices refreshed"
 msgstr "حُدّثت أجهزة الصوت"
 
-#: addon\globalPlugins\audio_switcher\__init__.py:327
+#: addon\globalPlugins\audio_switcher\__init__.py:502
+msgid "Do not change"
+msgstr "عدم التغيير"
+
+#: addon\globalPlugins\audio_switcher\__init__.py:502
+msgid "None (Clear)"
+msgstr "لا يوجد (مسح الإعداد)"
+
+#: addon\globalPlugins\audio_switcher\__init__.py:508
+#, python-brace-format
+msgid "{device} (current secondary)"
+msgstr "{device} (الثانوي الحالي)"
+
+#: addon\globalPlugins\audio_switcher\__init__.py:529
 msgid "Do not change the default speaker"
 msgstr "لا تغيّر السماعة الافتراضية"
 
-#: addon\globalPlugins\audio_switcher\__init__.py:328
-#: addon\globalPlugins\audio_switcher\__init__.py:415
-msgid "No connected speakers"
-msgstr "لا توجد سماعات متصلة"
-
-#: addon\globalPlugins\audio_switcher\__init__.py:343
+#: addon\globalPlugins\audio_switcher\__init__.py:542
 msgid "Do not change the default microphone"
 msgstr "لا تغيّر الميكروفون الافتراضي"
 
-#: addon\globalPlugins\audio_switcher\__init__.py:344
-#: addon\globalPlugins\audio_switcher\__init__.py:419
-msgid "No connected microphones"
-msgstr "لا توجد ميكروفونات متصلة"
-
 #. Translators: marks the current device in the quick selection dialog.
-#: addon\globalPlugins\audio_switcher\__init__.py:362
+#: addon\globalPlugins\audio_switcher\__init__.py:558
 #, python-brace-format
 msgid "{device} (current default)"
 msgstr "{device} (الافتراضي حالياً)"
 
+#: addon\globalPlugins\audio_switcher\__init__.py:605
+#, python-brace-format
+msgid "{device} (saved, not connected)"
+msgstr "{device} (محفوظ، غير متصل)"
+
+#. Translators: profile field option that leaves the device unchanged.
+#: addon\globalPlugins\audio_switcher\__init__.py:616
+#: addon\globalPlugins\audio_switcher\__init__.py:728
+msgid "No change"
+msgstr "بلا تغيير"
+
+#. Translators: profile option that sends NVDA speech to the Windows default.
+#: addon\globalPlugins\audio_switcher\__init__.py:621
+msgid "System default"
+msgstr "جهاز النظام الافتراضي"
+
 #. Add-on summary/title, usually the user visible name of the add-on
 #. Translators: Summary/title for this add-on
 #. to be shown on installation and add-on information found in add-on store
-#: addon\globalPlugins\audio_switcher\__init__.py:395
-#: addon\globalPlugins\audio_switcher\__init__.py:501 buildVars.py:20
+#: addon\globalPlugins\audio_switcher\__init__.py:630
+#: addon\globalPlugins\audio_switcher\__init__.py:784 buildVars.py:25
 msgid "Audio Switcher"
 msgstr "مبدل أجهزة الصوت"
 
-#: addon\globalPlugins\audio_switcher\__init__.py:427
+#: addon\globalPlugins\audio_switcher\__init__.py:638
 msgid "&Speaker 1:"
 msgstr "&السماعة الأولى:"
 
-#: addon\globalPlugins\audio_switcher\__init__.py:428
+#: addon\globalPlugins\audio_switcher\__init__.py:638
 msgid "S&peaker 2:"
 msgstr "ا&لسماعة الثانية:"
 
-#: addon\globalPlugins\audio_switcher\__init__.py:429
+#: addon\globalPlugins\audio_switcher\__init__.py:638
 msgid "Sp&eaker 3:"
 msgstr "الس&ماعة الثالثة:"
 
-#: addon\globalPlugins\audio_switcher\__init__.py:444
+#: addon\globalPlugins\audio_switcher\__init__.py:639
 msgid "&Microphone 1:"
 msgstr "&الميكروفون الأول:"
 
-#: addon\globalPlugins\audio_switcher\__init__.py:445
+#: addon\globalPlugins\audio_switcher\__init__.py:639
 msgid "M&icrophone 2:"
 msgstr "ا&لميكروفون الثاني:"
 
-#: addon\globalPlugins\audio_switcher\__init__.py:446
+#: addon\globalPlugins\audio_switcher\__init__.py:639
 msgid "Mi&crophone 3:"
 msgstr "الم&يكروفون الثالث:"
 
-#: addon\globalPlugins\audio_switcher\__init__.py:469
+#: addon\globalPlugins\audio_switcher\__init__.py:647
+msgid "NVDA Secondary &Output Device:"
+msgstr "مخرج صوت NVDA الثا&نوي:"
+
+#: addon\globalPlugins\audio_switcher\__init__.py:649
+msgid "None (Not configured)"
+msgstr "لا يوجد (غير محدد)"
+
+#: addon\globalPlugins\audio_switcher\__init__.py:669
 msgid "Beep and Speech"
 msgstr "صافرة ونطق"
 
-#: addon\globalPlugins\audio_switcher\__init__.py:470
+#: addon\globalPlugins\audio_switcher\__init__.py:670
 msgid "Speech Only"
 msgstr "نطق فقط"
 
-#: addon\globalPlugins\audio_switcher\__init__.py:471
+#: addon\globalPlugins\audio_switcher\__init__.py:671
 msgid "Beep Only"
 msgstr "صافرة فقط"
 
-#: addon\globalPlugins\audio_switcher\__init__.py:472
+#: addon\globalPlugins\audio_switcher\__init__.py:672
 msgid "None"
 msgstr "بلا"
 
-#: addon\globalPlugins\audio_switcher\__init__.py:475
+#: addon\globalPlugins\audio_switcher\__init__.py:675
 msgid "Feedback &Type:"
 msgstr "&أسلوب التنبيه:"
 
+#: addon\globalPlugins\audio_switcher\__init__.py:700
+msgid "P&rofile:"
+msgstr "ال&وضع:"
+
+#: addon\globalPlugins\audio_switcher\__init__.py:703
+msgid "Profile &name:"
+msgstr "&اسم الوضع:"
+
+#: addon\globalPlugins\audio_switcher\__init__.py:704
+msgid "Profile spea&ker:"
+msgstr "س&ماعة الوضع:"
+
+#: addon\globalPlugins\audio_switcher\__init__.py:705
+msgid "Profile microp&hone:"
+msgstr "م&يكروفون الوضع:"
+
+#: addon\globalPlugins\audio_switcher\__init__.py:706
+msgid "Profile NVDA o&utput:"
+msgstr "مخرج NVDA &للوضع:"
+
+#: addon\globalPlugins\audio_switcher\__init__.py:708
+msgid "Save current &devices to profile"
+msgstr "&حفظ الأجهزة الحالية في الوضع"
+
+#. Translators: spoken after the profile fields are filled with current devices.
+#: addon\globalPlugins\audio_switcher\__init__.py:768
+msgid "Current devices filled in"
+msgstr "مُلئت الخانات بالأجهزة الحالية"
+
 #. Translators: description in Input Gestures dialog.
-#: addon\globalPlugins\audio_switcher\__init__.py:517
+#: addon\globalPlugins\audio_switcher\__init__.py:804
+msgid "Open Audio Switcher settings."
+msgstr "فتح إعدادات مبدل أجهزة الصوت."
+
+#. Translators: description in Input Gestures dialog.
+#: addon\globalPlugins\audio_switcher\__init__.py:815
 msgid "Choose default audio devices."
 msgstr "اختيار أجهزة الصوت الافتراضية."
 
 #. Translators: description in Input Gestures dialog.
-#: addon\globalPlugins\audio_switcher\__init__.py:538
+#: addon\globalPlugins\audio_switcher\__init__.py:847
 msgid "Set speaker 1 as default."
 msgstr "تعيين السماعة الأولى كافتراضية."
 
 #. Translators: description in Input Gestures dialog.
-#: addon\globalPlugins\audio_switcher\__init__.py:545
+#: addon\globalPlugins\audio_switcher\__init__.py:854
 msgid "Set speaker 2 as default."
 msgstr "تعيين السماعة الثانية كافتراضية."
 
 #. Translators: description in Input Gestures dialog.
-#: addon\globalPlugins\audio_switcher\__init__.py:552
+#: addon\globalPlugins\audio_switcher\__init__.py:861
 msgid "Set speaker 3 as default."
 msgstr "تعيين السماعة الثالثة كافتراضية."
 
 #. Translators: description in Input Gestures dialog.
-#: addon\globalPlugins\audio_switcher\__init__.py:559
+#: addon\globalPlugins\audio_switcher\__init__.py:868
 msgid "Set microphone 1 as default."
 msgstr "تعيين الميكروفون الأول كافتراضي."
 
 #. Translators: description in Input Gestures dialog.
-#: addon\globalPlugins\audio_switcher\__init__.py:566
+#: addon\globalPlugins\audio_switcher\__init__.py:875
 msgid "Set microphone 2 as default."
 msgstr "تعيين الميكروفون الثاني كافتراضي."
 
 #. Translators: description in Input Gestures dialog.
-#: addon\globalPlugins\audio_switcher\__init__.py:573
+#: addon\globalPlugins\audio_switcher\__init__.py:882
 msgid "Set microphone 3 as default."
 msgstr "تعيين الميكروفون الثالث كافتراضي."
 
 #. Translators: description in Input Gestures dialog.
-#: addon\globalPlugins\audio_switcher\__init__.py:580
+#: addon\globalPlugins\audio_switcher\__init__.py:889
 msgid "Announce current default speaker."
 msgstr "نطق السماعة الافتراضية الحالية."
 
 #. Translators: description in Input Gestures dialog.
-#: addon\globalPlugins\audio_switcher\__init__.py:587
+#: addon\globalPlugins\audio_switcher\__init__.py:896
 msgid "Announce current default microphone."
 msgstr "نطق الميكروفون الافتراضي الحالي."
 
 #. Translators: description in Input Gestures dialog.
-#: addon\globalPlugins\audio_switcher\__init__.py:594
+#: addon\globalPlugins\audio_switcher\__init__.py:903
 msgid "Announce current default speaker and microphone."
 msgstr "نطق السماعة والميكروفون الافتراضيين الحاليين."
 
-#: buildVars.py:24
+#. Translators: description in Input Gestures dialog.
+#: addon\globalPlugins\audio_switcher\__init__.py:910
+msgid "Cycle to next playback device (speaker)."
+msgstr "التبديل إلى السماعة التالية."
+
+#. Translators: description in Input Gestures dialog.
+#: addon\globalPlugins\audio_switcher\__init__.py:917
+msgid "Cycle to next recording device (microphone)."
+msgstr "التبديل إلى الميكروفون التالي."
+
+#. Translators: description in Input Gestures dialog.
+#: addon\globalPlugins\audio_switcher\__init__.py:924
+msgid "Toggle mute for default microphone."
+msgstr "كتم واسترجاع الميكروفون الافتراضي."
+
+#. Translators: description in Input Gestures dialog.
+#: addon\globalPlugins\audio_switcher\__init__.py:931
+msgid "Announce whether default microphone is muted."
+msgstr "إعلان حالة كتم الميكروفون الافتراضي."
+
+#. Translators: description in Input Gestures dialog.
+#: addon\globalPlugins\audio_switcher\__init__.py:938
+msgid "Toggle NVDA audio output between Primary and secondary device."
+msgstr "تبديل مخرج صوت NVDA بين الجهاز الأساسي والجهاز الثانوي."
+
+#. Translators: description in Input Gestures dialog.
+#: addon\globalPlugins\audio_switcher\__init__.py:945
+msgid "Activate profile 1."
+msgstr "تفعيل الوضع الأول."
+
+#. Translators: description in Input Gestures dialog.
+#: addon\globalPlugins\audio_switcher\__init__.py:952
+msgid "Activate profile 2."
+msgstr "تفعيل الوضع الثاني."
+
+#. Translators: description in Input Gestures dialog.
+#: addon\globalPlugins\audio_switcher\__init__.py:959
+msgid "Activate profile 3."
+msgstr "تفعيل الوضع الثالث."
+
+#: buildVars.py:29
 msgid ""
 "Sets configured or directly selected speakers and microphones as default and "
 "announces current defaults."
@@ -246,106 +449,19 @@ msgstr ""
 "تعيين السماعات والميكروفونات المهيأة أو المختارة مباشرة أجهزة افتراضية، ونطق "
 "الأجهزة الافتراضية الحالية."
 
-#: buildVars.py:36
+#: buildVars.py:37
 msgid ""
-"Added one-key toggling of NVDA's own audio output between the system default and a configured secondary device. "
-"Added a secondary output selector to the settings panel and quick selection dialog, and a gesture to open the settings directly. "
-"Saved devices are kept in settings while disconnected, and Arabic translations now load correctly. Requires NVDA 2025.1 or later."
+"Added one-key toggling of NVDA's own audio output between the system default "
+"and a configured secondary device. Added a secondary output selector to the "
+"settings panel and quick selection dialog, and a gesture to open the "
+"settings directly. Saved devices are kept in settings while disconnected, "
+"and Arabic translations now load correctly. Requires NVDA 2025.1 or later."
 msgstr ""
-"إضافة تبديل مخرج صوت NVDA بنقرة واحدة بين الجهاز الافتراضي للنظام وجهاز ثانوي محدد. "
-"وإضافة اختيار الجهاز الثانوي في لوحة الإعدادات وحوار الاختيار السريع، وإيماءة لفتح الإعدادات مباشرة. "
-"وحفظ الأجهزة المهيأة في الإعدادات وإن انفصلت، وإصلاح تحميل الترجمة العربية. وتتطلب الإضافة NVDA 2025.1 أو أحدث."
+"إضافة تبديل مخرج صوت NVDA بنقرة واحدة بين الجهاز الافتراضي للنظام وجهاز "
+"ثانوي محدد. وإضافة اختيار الجهاز الثانوي في لوحة الإعدادات وحوار الاختيار "
+"السريع، وإيماءة لفتح الإعدادات مباشرة. وحفظ الأجهزة المهيأة في الإعدادات وإن "
+"انفصلت، وإصلاح تحميل الترجمة العربية. وتتطلب الإضافة NVDA 2025.1 أو أحدث."
 
 #, python-brace-format
-msgid "Only one speaker: {device}"
-msgstr "لا توجد سوى سماعة واحدة: {device}"
-
-#, python-brace-format
-msgid "Only one mic: {device}"
-msgstr "لا يوجد سوى ميكروفون واحد: {device}"
-
-#, python-brace-format
-msgid "Speaker: {device} ({index} of {total})"
-msgstr "السماعة: {device} ({index} من {total})"
-
-#, python-brace-format
-msgid "Mic: {device} ({index} of {total})"
-msgstr "الميكروفون: {device} ({index} من {total})"
-
-msgid "Mic muted"
-msgstr "الميكروفون مكتوم"
-
-msgid "Mic on"
-msgstr "الميكروفون يعمل"
-
-#. Translators: description in Input Gestures dialog.
-msgid "Cycle to next playback device (speaker)."
-msgstr "التبديل إلى السماعة التالية."
-
-#. Translators: description in Input Gestures dialog.
-msgid "Cycle to next recording device (microphone)."
-msgstr "التبديل إلى الميكروفون التالي."
-
-#. Translators: description in Input Gestures dialog.
-msgid "Toggle mute for default microphone."
-msgstr "كتم واسترجاع الميكروفون الافتراضي."
-
-#. Translators: description in Input Gestures dialog.
-msgid "Announce whether default microphone is muted."
-msgstr "إعلان حالة كتم الميكروفون الافتراضي."
-
-msgid "NVDA Secondary &Output Device:"
-msgstr "مخرج صوت NVDA الثا&نوي:"
-
-msgid "NVDA Secondary &Output:"
-msgstr "مخرج صوت NVDA الثا&نوي:"
-
-msgid "None (Not configured)"
-msgstr "لا يوجد (غير محدد)"
-
-#, python-brace-format
-msgid "{device} (saved, not connected)"
-msgstr "{device} (محفوظ، غير متصل)"
-
-msgid "Do not change"
-msgstr "عدم التغيير"
-
-msgid "None (Clear)"
-msgstr "لا يوجد (مسح الإعداد)"
-
-#, python-brace-format
-msgid "{device} (current secondary)"
-msgstr "{device} (الثانوي الحالي)"
-
-#, python-brace-format
-msgid "NVDA: {device}"
-msgstr "NVDA: {device}"
-
-msgid "No secondary device configured for NVDA"
-msgstr "لم يُحدد جهاز ثانوي لـ NVDA"
-
-msgid "NVDA secondary device not connected"
-msgstr "جهاز NVDA الثانوي غير متصل"
-
-msgid "Failed to switch NVDA audio output"
-msgstr "تعذر تبديل مخرج صوت NVDA"
-
-#, python-brace-format
-msgid "NVDA secondary: {device}"
-msgstr "جهاز NVDA الثانوي: {device}"
-
-msgid "NVDA secondary device cleared"
-msgstr "مُسِح جهاز NVDA الثانوي"
-
-#. Translators: description in Input Gestures dialog.
-msgid "Toggle NVDA audio output between Primary and secondary device."
-msgstr "تبديل مخرج صوت NVDA بين الجهاز الأساسي والجهاز الثانوي."
-
-msgid "Primary Device (System Default)"
-msgstr "الجهاز الأساسي (الافتراضي للنظام)"
-
-#. Translators: description in Input Gestures dialog.
-msgid "Open Audio Switcher settings."
-msgstr "فتح إعدادات مبدل أجهزة الصوت."
-
-
+#~ msgid "NVDA secondary: {device}"
+#~ msgstr "جهاز NVDA الثانوي: {device}"

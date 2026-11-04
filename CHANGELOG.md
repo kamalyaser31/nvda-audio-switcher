@@ -2,7 +2,20 @@
 
 All notable changes to the Audio Switcher add-on will be documented in this file.
 
-## [2026.4] - Unreleased
+## [2026.5] - Unreleased
+
+### feat: audio profiles
+- Added three named profiles; each can set the default speaker, the default microphone, and NVDA's output device, and is activated by its own gesture (`script_activateProfile1`-`3`).
+- Activation speaks only the profile name; unplugged devices are skipped and named (`Not connected: ...`).
+- Added a profile section to the settings panel with a profile chooser and a "Save current devices to profile" button.
+
+### feat: quick dialog switches NVDA output
+- Choosing a device in the dialog's NVDA list now also moves NVDA speech to it at once; clearing it returns NVDA to the system default when NVDA was on the cleared device.
+
+### chore: housekeeping
+- Dated the 2026.4 release and deleted the merged `feat/nvda-output-toggle` branch.
+
+## [2026.4] - 2026-09-30
 
 ### feat: integrate NVDA output toggling and direct settings panel gesture
 - Added one-key toggling between primary and secondary NVDA speech output devices (`script_toggleNvdaOutput`).

@@ -17,6 +17,7 @@ from .core_audio import (
     toggleDefaultMicMute,
     cycleNextDevice,
 )
+from . import profiles
 
 addonHandler.initTranslation()
 
@@ -30,7 +31,7 @@ speakerDevice2 = string(default="")
 speakerDevice3 = string(default="")
 feedbackType = integer(default=0, min=0, max=3)
 nvdaSecondaryOutput = string(default="")
-"""
+""" + profiles.profileConfspec() + "\n"
 
 
 def parseDeviceConfig(value):
@@ -329,15 +330,50 @@ def _applyEndpoint(endpoint, isSpeaker, success, failure):
         )
 
 
-def _applySecondaryDevice(secondaryDevice, success):
+def _moveNvdaOutput(newId, displayName, success, failure):
+    # Already there: skip the synth reload so speech is not cut for nothing.
+    if newId == getNvdaCurrentOutputDeviceId() or safeSetNvdaOutputDevice(newId):
+        success.append(_("NVDA: {device}").format(device=displayName))
+    else:
+        failure.append(_("Failed to switch NVDA audio output"))
+
+
+def _moveNvdaToChosen(secondaryDevice, success, failure):
+    active = getActiveDevices(render=True)
+    targetId, targetName = parseDeviceConfig(secondaryDevice)
+    matchedId = findMatchingDeviceId(active, targetId, targetName)
+    if not matchedId:
+        failure.append(_("NVDA secondary device not connected"))
+        return
+    displayName = _getNvdaDisplayName(matchedId, active, targetName)
+    _moveNvdaOutput(matchedId, displayName, success, failure)
+
+
+def _isNvdaOnDevice(configValue):
+    if not configValue:
+        return False
+    targetId, targetName = parseDeviceConfig(configValue)
+    # Name-only values from old configs carry no ID, so resolve them first.
+    active = getActiveDevices(render=True)
+    matchedId = findMatchingDeviceId(active, targetId, targetName)
+    return getNvdaCurrentOutputDeviceId() in {targetId, matchedId} - {"", None}
+
+
+def _applySecondaryDevice(secondaryDevice, success, failure):
+    """Save the secondary device and move NVDA speech to it at once."""
     if secondaryDevice is None:
         return
-    config.conf["audioSwitcher"]["nvdaSecondaryOutput"] = secondaryDevice
+    cfg = config.conf["audioSwitcher"]
+    oldValue = cfg["nvdaSecondaryOutput"]
+    cfg["nvdaSecondaryOutput"] = secondaryDevice
     if secondaryDevice:
-        _id, name = parseDeviceConfig(secondaryDevice)
-        success.append(_("NVDA secondary: {device}").format(device=name))
-    else:
-        success.append(_("NVDA secondary device cleared"))
+        _moveNvdaToChosen(secondaryDevice, success, failure)
+        return
+    success.append(_("NVDA secondary device cleared"))
+    # Leave NVDA where it is unless it was speaking on the device just cleared.
+    if _isNvdaOnDevice(oldValue):
+        primary = _("Primary Device (System Default)")
+        _moveNvdaOutput("default", primary, success, failure)
 
 
 def applyDeviceSelections(speaker, microphone, secondaryDevice=None):
@@ -345,8 +381,75 @@ def applyDeviceSelections(speaker, microphone, secondaryDevice=None):
     failure = []
     _applyEndpoint(speaker, True, success, failure)
     _applyEndpoint(microphone, False, success, failure)
-    _applySecondaryDevice(secondaryDevice, success)
+    _applySecondaryDevice(secondaryDevice, success, failure)
     provideFeedback(success, failure)
+
+
+def matchConfigured(active, value):
+    return findMatchingDeviceId(active, *parseDeviceConfig(value))
+
+
+def profileName(n):
+    name = config.conf["audioSwitcher"][profiles.profileKey(n, "Name")].strip()
+    # Translators: name of a profile left unnamed; {n} is its number.
+    return name or _("Profile {n}").format(n=n)
+
+
+def readProfile(n):
+    cfg = config.conf["audioSwitcher"]
+    return {
+        field: cfg[profiles.profileKey(n, field)] for field in profiles.DEVICE_FIELDS
+    }
+
+
+def _applyProfileEndpoint(deviceId, failureMessage, failures):
+    if deviceId is None:
+        return False
+    if setDefaultDevice(deviceId):
+        return True
+    failures.append(failureMessage)
+    return False
+
+
+def _applyProfileNvda(nvdaId, failures):
+    if nvdaId is None:
+        return False
+    # Already there: skip the synth reload so speech is not cut for nothing.
+    if nvdaId == getNvdaCurrentOutputDeviceId():
+        return True
+    if safeSetNvdaOutputDevice(nvdaId):
+        return True
+    failures.append(_("Failed to switch NVDA audio output"))
+    return False
+
+
+def _resolveProfile(n):
+    return profiles.resolveProfile(
+        readProfile(n),
+        getActiveDevices(render=True),
+        getActiveDevices(render=False),
+        matchConfigured,
+    )
+
+
+def activateProfile(n):
+    name = profileName(n)
+    res = _resolveProfile(n)
+    if res.isEmpty:
+        # Translators: spoken when a profile with no devices is activated.
+        ui.message(_("{name} is not configured").format(name=name))
+        return
+    failures = []
+    applied = [
+        _applyProfileEndpoint(res.speakerId, _("Failed to set speaker"), failures),
+        _applyProfileEndpoint(res.micId, _("Failed to set microphone"), failures),
+        _applyProfileNvda(res.nvdaId, failures),
+    ]
+    if res.missing:
+        # Translators: lists profile devices that are unplugged.
+        missingMsg = _("Not connected: {devices}")
+        failures.insert(0, missingMsg.format(devices=", ".join(res.missing)))
+    provideFeedback([name] if any(applied) else [], failures)
 
 
 class AudioDeviceSelectionDialog(wx.Dialog):
@@ -516,21 +619,39 @@ def buildDeviceChoices(activeDevices, configuredValue, noneLabel):
     return values, labels, selection
 
 
+def buildNvdaProfileChoices(playback, value):
+    """Like buildDeviceChoices, with "System default" inserted after "No change"."""
+    isDefault = value == profiles.NVDA_DEFAULT
+    # Translators: profile field option that leaves the device unchanged.
+    noChange = _("No change")
+    built = buildDeviceChoices(playback, "" if isDefault else value, noChange)
+    values, labels, selection = built
+    values.insert(1, profiles.NVDA_DEFAULT)
+    # Translators: profile option that sends NVDA speech to the Windows default.
+    labels.insert(1, _("System default"))
+    if isDefault:
+        selection = 1
+    elif selection:
+        selection += 1
+    return values, labels, selection
+
+
 class AudioSwitcherSettingsPanel(SettingsPanel):
     title = _("Audio Switcher")
+    speakerLabels = (_("&Speaker 1:"), _("S&peaker 2:"), _("Sp&eaker 3:"))
+    micLabels = (_("&Microphone 1:"), _("M&icrophone 2:"), _("Mi&crophone 3:"))
 
     def makeSettings(self, settingsSizer):
         sHelper = gui.guiHelper.BoxSizerHelper(self, sizer=settingsSizer)
         playback = getActiveDevices(render=True)
         capture = getActiveDevices(render=False)
-        # (config key, wx.Choice, values) for every device control.
-        self.deviceControls = []
-        speakerLabels = (_("&Speaker 1:"), _("S&peaker 2:"), _("Sp&eaker 3:"))
-        micLabels = (_("&Microphone 1:"), _("M&icrophone 2:"), _("Mi&crophone 3:"))
+        self.deviceControls = []  # (config key, wx.Choice, values) per control.
         speakerEmpty = "" if playback else _("No connected speakers")
         micEmpty = "" if capture else _("No connected microphones")
-        self._addSlotControls(sHelper, "speaker", speakerLabels, playback, speakerEmpty)
-        self._addSlotControls(sHelper, "mic", micLabels, capture, micEmpty)
+        self._addSlotControls(
+            sHelper, "speaker", self.speakerLabels, playback, speakerEmpty
+        )
+        self._addSlotControls(sHelper, "mic", self.micLabels, capture, micEmpty)
         self._addDeviceControl(
             sHelper,
             "nvdaSecondaryOutput",
@@ -538,6 +659,7 @@ class AudioSwitcherSettingsPanel(SettingsPanel):
             playback,
             _("None (Not configured)"),
         )
+        self._addProfileSettings(sHelper, playback, capture)
         self._addFeedbackSettings(sHelper)
 
     def _addSlotControls(self, sHelper, prefix, labels, devices, noneLabel):
@@ -566,11 +688,108 @@ class AudioSwitcherSettingsPanel(SettingsPanel):
         feedback = config.conf["audioSwitcher"]["feedbackType"]
         self.feedbackTypeChoice.SetSelection(feedback)
 
+    def _addProfileSettings(self, sHelper, playback, capture):
+        self.profilePlayback = playback
+        self.profileCapture = capture
+        cfg = config.conf["audioSwitcher"]
+        # Edits of all profiles live here until onSave, so switching the
+        # chooser keeps them and Cancel discards them.
+        self.profileEdits = {
+            n: {field: cfg[profiles.profileKey(n, field)] for field in profiles.FIELDS}
+            for n in range(1, profiles.PROFILE_COUNT + 1)
+        }
+        self.profileChoiceValues = {}
+        self._createProfileControls(sHelper)
+        self._shownProfile = 1
+        self._loadProfileFields(1)
+
+    def _createProfileControls(self, sHelper):
+        names = [
+            _("Profile {n}").format(n=n) for n in range(1, profiles.PROFILE_COUNT + 1)
+        ]
+        add = sHelper.addLabeledControl
+        self.profileChooser = add(_("P&rofile:"), wx.Choice, choices=names)
+        self.profileChooser.SetSelection(0)
+        self.profileChooser.Bind(wx.EVT_CHOICE, self._onProfileChosen)
+        self.profileNameEdit = add(_("Profile &name:"), wx.TextCtrl)
+        self.profileSpeaker = add(_("Profile spea&ker:"), wx.Choice, choices=[])
+        self.profileMic = add(_("Profile microp&hone:"), wx.Choice, choices=[])
+        self.profileNvda = add(_("Profile NVDA o&utput:"), wx.Choice, choices=[])
+        saveButton = sHelper.addItem(
+            wx.Button(self, label=_("Save current &devices to profile"))
+        )
+        saveButton.Bind(wx.EVT_BUTTON, self._onSaveCurrentDevices)
+
+    def _profileChoices(self):
+        return (
+            ("Speaker", self.profileSpeaker),
+            ("Mic", self.profileMic),
+            ("Nvda", self.profileNvda),
+        )
+
+    def _setProfileChoice(self, field, choice, built):
+        values, labels, selection = built
+        choice.Set(labels)
+        choice.SetSelection(selection)
+        choice.Enable(len(values) > 1)
+        self.profileChoiceValues[field] = values
+
+    def _loadProfileFields(self, n):
+        edits = self.profileEdits[n]
+        noChange = _("No change")
+        self.profileNameEdit.SetValue(edits["Name"])
+        self._setProfileChoice(
+            "Speaker",
+            self.profileSpeaker,
+            buildDeviceChoices(self.profilePlayback, edits["Speaker"], noChange),
+        )
+        self._setProfileChoice(
+            "Mic",
+            self.profileMic,
+            buildDeviceChoices(self.profileCapture, edits["Mic"], noChange),
+        )
+        self._setProfileChoice(
+            "Nvda",
+            self.profileNvda,
+            buildNvdaProfileChoices(self.profilePlayback, edits["Nvda"]),
+        )
+        self._shownProfile = n
+
+    def _storeProfileFields(self):
+        edits = self.profileEdits[self._shownProfile]
+        edits["Name"] = self.profileNameEdit.GetValue().strip()
+        for field, choice in self._profileChoices():
+            edits[field] = self.profileChoiceValues[field][choice.GetSelection()]
+
+    def _onProfileChosen(self, event):
+        self._storeProfileFields()
+        self._loadProfileFields(self.profileChooser.GetSelection() + 1)
+
+    def _onSaveCurrentDevices(self, event):
+        self._storeProfileFields()
+        # A device may have been plugged in after the panel opened.
+        self.profilePlayback = getActiveDevices(render=True)
+        self.profileCapture = getActiveDevices(render=False)
+        current = profiles.currentDevicesAsProfile(
+            getDefaultDeviceInfo(render=True),
+            getDefaultDeviceInfo(render=False),
+            getNvdaCurrentOutputDeviceId(),
+            self.profilePlayback,
+        )
+        self.profileEdits[self._shownProfile].update(current)
+        self._loadProfileFields(self._shownProfile)
+        # Translators: spoken after the profile fields are filled with current devices.
+        ui.message(_("Current devices filled in"))
+
     def onSave(self):
         cfg = config.conf["audioSwitcher"]
         for key, choice, values in self.deviceControls:
             cfg[key] = values[choice.GetSelection()]
         cfg["feedbackType"] = self.feedbackTypeChoice.GetSelection()
+        self._storeProfileFields()
+        for n, edits in self.profileEdits.items():
+            for field in profiles.FIELDS:
+                cfg[profiles.profileKey(n, field)] = edits[field]
 
 
 class GlobalPlugin(globalPluginHandler.GlobalPlugin):
@@ -734,3 +953,24 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
     )
     def script_toggleNvdaOutput(self, gesture):
         toggleNvdaOutputWithFeedback()
+
+    @script(
+        # Translators: description in Input Gestures dialog.
+        description=_("Activate profile 1.")
+    )
+    def script_activateProfile1(self, gesture):
+        activateProfile(1)
+
+    @script(
+        # Translators: description in Input Gestures dialog.
+        description=_("Activate profile 2.")
+    )
+    def script_activateProfile2(self, gesture):
+        activateProfile(2)
+
+    @script(
+        # Translators: description in Input Gestures dialog.
+        description=_("Activate profile 3.")
+    )
+    def script_activateProfile3(self, gesture):
+        activateProfile(3)
