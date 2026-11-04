@@ -2,7 +2,7 @@
 
 All notable changes to the Audio Switcher add-on will be documented in this file.
 
-## [2026.4] - Unreleased
+## [2026.4] - 2026-09-30
 
 ### feat: integrate NVDA output toggling and direct settings panel gesture
 - Added one-key toggling between primary and secondary NVDA speech output devices (`script_toggleNvdaOutput`).

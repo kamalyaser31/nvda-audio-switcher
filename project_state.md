@@ -4,8 +4,8 @@
 Audio Switcher is an NVDA screen reader add-on created by Kamal Yaser that sets configured or directly selected speakers and microphones as default and announces current defaults.
 
 ## Architecture & Tech Stack
-- **Version:** 2026.3
-- **Runtime:** Python 3 (NVDA 2024.1+ compatible, tested up to NVDA 2026.1).
+- **Version:** 2026.4
+- **Runtime:** Python 3 (NVDA 2025.1+ required, tested up to NVDA 2026.1).
 - **Core Audio Backend (`core_audio.py`):** Pure Win32 Core Audio using standard `ctypes` and raw COM VTables:
   - `MMDeviceEnumerator`: audio endpoint enumeration (`getActiveDevices`) and default device queries (`getDefaultDeviceInfo`).
   - `IPropertyStore`: device friendly name extraction (`PKEY_Device_FriendlyName`).
@@ -27,7 +27,10 @@ Audio Switcher is an NVDA screen reader add-on created by Kamal Yaser that sets 
 - All 16 legacy `pycaw/` files removed.
 - GitHub Release v2026.3 published with `audioSwitcher-2026.3.nvda-addon`.
 - Registration issue #11776 submitted to NVDA Add-on Store (`nvaccess/addon-datastore`).
-- Local feature branch `feat/nvda-output-toggle`:
+- 2026.4 merged into `master` and published; branch `feat/nvda-output-toggle` is merged and can be deleted.
+- Pending: 2026.5 (three profiles; quick dialog NVDA field switches output), design approved in `docs/superpowers/specs/2026-11-03-profiles-design.md`, plan in `docs/superpowers/plans/2026-11-03-profiles.md`.
+- Decision: open number of profiles rejected, because NVDA Input Gestures lists only scripts defined in advance; three fixed profiles instead.
+- 2026.4 contents (from `feat/nvda-output-toggle`):
   - Integrated NVDA output toggling feature (merged from `audioToggler`/`nvdaOutputToggler`).
   - Unified core audio device discovery and hybrid persistence (`id|name`) in `confspec`.
   - Atomic switching: reinitialises `tones` and reloads the running synth via `setSynth()`, with rollback on failure.
