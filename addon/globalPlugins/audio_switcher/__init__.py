@@ -330,15 +330,40 @@ def _applyEndpoint(endpoint, isSpeaker, success, failure):
         )
 
 
-def _applySecondaryDevice(secondaryDevice, success):
+def _moveNvdaOutput(newId, displayName, success, failure):
+    # Already there: skip the synth reload so speech is not cut for nothing.
+    if newId == getNvdaCurrentOutputDeviceId() or safeSetNvdaOutputDevice(newId):
+        success.append(_("NVDA: {device}").format(device=displayName))
+    else:
+        failure.append(_("Failed to switch NVDA audio output"))
+
+
+def _moveNvdaToChosen(secondaryDevice, success, failure):
+    active = getActiveDevices(render=True)
+    targetId, targetName = parseDeviceConfig(secondaryDevice)
+    matchedId = findMatchingDeviceId(active, targetId, targetName)
+    if not matchedId:
+        failure.append(_("NVDA secondary device not connected"))
+        return
+    displayName = _getNvdaDisplayName(matchedId, active, targetName)
+    _moveNvdaOutput(matchedId, displayName, success, failure)
+
+
+def _applySecondaryDevice(secondaryDevice, success, failure):
+    """Save the secondary device and move NVDA speech to it at once."""
     if secondaryDevice is None:
         return
-    config.conf["audioSwitcher"]["nvdaSecondaryOutput"] = secondaryDevice
+    cfg = config.conf["audioSwitcher"]
+    oldId, _oldName = parseDeviceConfig(cfg["nvdaSecondaryOutput"])
+    cfg["nvdaSecondaryOutput"] = secondaryDevice
     if secondaryDevice:
-        _id, name = parseDeviceConfig(secondaryDevice)
-        success.append(_("NVDA secondary: {device}").format(device=name))
-    else:
-        success.append(_("NVDA secondary device cleared"))
+        _moveNvdaToChosen(secondaryDevice, success, failure)
+        return
+    success.append(_("NVDA secondary device cleared"))
+    # Leave NVDA where it is unless it was speaking on the device just cleared.
+    if oldId and getNvdaCurrentOutputDeviceId() == oldId:
+        primary = _("Primary Device (System Default)")
+        _moveNvdaOutput("default", primary, success, failure)
 
 
 def applyDeviceSelections(speaker, microphone, secondaryDevice=None):
@@ -346,7 +371,7 @@ def applyDeviceSelections(speaker, microphone, secondaryDevice=None):
     failure = []
     _applyEndpoint(speaker, True, success, failure)
     _applyEndpoint(microphone, False, success, failure)
-    _applySecondaryDevice(secondaryDevice, success)
+    _applySecondaryDevice(secondaryDevice, success, failure)
     provideFeedback(success, failure)
 
 
