@@ -584,6 +584,23 @@ def buildDeviceChoices(activeDevices, configuredValue, noneLabel):
     return values, labels, selection
 
 
+def buildNvdaProfileChoices(playback, value):
+    """Like buildDeviceChoices, with "System default" inserted after "No change"."""
+    isDefault = value == profiles.NVDA_DEFAULT
+    # Translators: profile field option that leaves the device unchanged.
+    noChange = _("No change")
+    built = buildDeviceChoices(playback, "" if isDefault else value, noChange)
+    values, labels, selection = built
+    values.insert(1, profiles.NVDA_DEFAULT)
+    # Translators: profile option that sends NVDA speech to the Windows default.
+    labels.insert(1, _("System default"))
+    if isDefault:
+        selection = 1
+    elif selection:
+        selection += 1
+    return values, labels, selection
+
+
 class AudioSwitcherSettingsPanel(SettingsPanel):
     title = _("Audio Switcher")
 
@@ -606,6 +623,7 @@ class AudioSwitcherSettingsPanel(SettingsPanel):
             playback,
             _("None (Not configured)"),
         )
+        self._addProfileSettings(sHelper, playback, capture)
         self._addFeedbackSettings(sHelper)
 
     def _addSlotControls(self, sHelper, prefix, labels, devices, noneLabel):
@@ -634,11 +652,105 @@ class AudioSwitcherSettingsPanel(SettingsPanel):
         feedback = config.conf["audioSwitcher"]["feedbackType"]
         self.feedbackTypeChoice.SetSelection(feedback)
 
+    def _addProfileSettings(self, sHelper, playback, capture):
+        self.profilePlayback = playback
+        self.profileCapture = capture
+        cfg = config.conf["audioSwitcher"]
+        # Edits of all profiles live here until onSave, so switching the
+        # chooser keeps them and Cancel discards them.
+        self.profileEdits = {
+            n: {field: cfg[profiles.profileKey(n, field)] for field in profiles.FIELDS}
+            for n in range(1, profiles.PROFILE_COUNT + 1)
+        }
+        self.profileChoiceValues = {}
+        self._createProfileControls(sHelper)
+        self._shownProfile = 1
+        self._loadProfileFields(1)
+
+    def _createProfileControls(self, sHelper):
+        names = [
+            _("Profile {n}").format(n=n) for n in range(1, profiles.PROFILE_COUNT + 1)
+        ]
+        add = sHelper.addLabeledControl
+        self.profileChooser = add(_("P&rofile:"), wx.Choice, choices=names)
+        self.profileChooser.SetSelection(0)
+        self.profileChooser.Bind(wx.EVT_CHOICE, self._onProfileChosen)
+        self.profileNameEdit = add(_("Profile &name:"), wx.TextCtrl)
+        self.profileSpeaker = add(_("Profile spea&ker:"), wx.Choice, choices=[])
+        self.profileMic = add(_("Profile microp&hone:"), wx.Choice, choices=[])
+        self.profileNvda = add(_("Profile NVDA o&utput:"), wx.Choice, choices=[])
+        saveButton = sHelper.addItem(
+            wx.Button(self, label=_("Save current &devices to profile"))
+        )
+        saveButton.Bind(wx.EVT_BUTTON, self._onSaveCurrentDevices)
+
+    def _profileChoices(self):
+        return (
+            ("Speaker", self.profileSpeaker),
+            ("Mic", self.profileMic),
+            ("Nvda", self.profileNvda),
+        )
+
+    def _setProfileChoice(self, field, choice, built):
+        values, labels, selection = built
+        choice.Set(labels)
+        choice.SetSelection(selection)
+        choice.Enable(len(values) > 1)
+        self.profileChoiceValues[field] = values
+
+    def _loadProfileFields(self, n):
+        edits = self.profileEdits[n]
+        noChange = _("No change")
+        self.profileNameEdit.SetValue(edits["Name"])
+        self._setProfileChoice(
+            "Speaker",
+            self.profileSpeaker,
+            buildDeviceChoices(self.profilePlayback, edits["Speaker"], noChange),
+        )
+        self._setProfileChoice(
+            "Mic",
+            self.profileMic,
+            buildDeviceChoices(self.profileCapture, edits["Mic"], noChange),
+        )
+        self._setProfileChoice(
+            "Nvda",
+            self.profileNvda,
+            buildNvdaProfileChoices(self.profilePlayback, edits["Nvda"]),
+        )
+        self._shownProfile = n
+
+    def _storeProfileFields(self):
+        edits = self.profileEdits[self._shownProfile]
+        edits["Name"] = self.profileNameEdit.GetValue().strip()
+        for field, choice in self._profileChoices():
+            edits[field] = self.profileChoiceValues[field][choice.GetSelection()]
+
+    def _onProfileChosen(self, event):
+        self._storeProfileFields()
+        self._loadProfileFields(self.profileChooser.GetSelection() + 1)
+
+    def _onSaveCurrentDevices(self, event):
+        self._storeProfileFields()
+        current = profiles.currentDevicesAsProfile(
+            getDefaultDeviceInfo(render=True),
+            getDefaultDeviceInfo(render=False),
+            getNvdaCurrentOutputDeviceId(),
+            self.profilePlayback,
+        )
+        self.profileEdits[self._shownProfile].update(current)
+        self._loadProfileFields(self._shownProfile)
+        # Translators: spoken after the profile fields are filled with current devices.
+        ui.message(_("Current devices filled in"))
+
     def onSave(self):
         cfg = config.conf["audioSwitcher"]
         for key, choice, values in self.deviceControls:
             cfg[key] = values[choice.GetSelection()]
         cfg["feedbackType"] = self.feedbackTypeChoice.GetSelection()
+        self._storeProfileFields()
+        for n, edits in self.profileEdits.items():
+            for field in profiles.FIELDS:
+                cfg[profiles.profileKey(n, field)] = edits[field]
 
 
 class GlobalPlugin(globalPluginHandler.GlobalPlugin):
