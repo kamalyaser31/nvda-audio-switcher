@@ -4,7 +4,7 @@
 Audio Switcher is an NVDA screen reader add-on created by Kamal Yaser that sets configured or directly selected speakers and microphones as default and announces current defaults.
 
 ## Architecture & Tech Stack
-- **Version:** 2026.5 (merged into local `master`, not pushed or published; 2026.4 is the published release)
+- **Version:** 2026.5 (pushed; GitHub Release `v2026.5`; store submission nvaccess/addon-datastore#12750 opened 2026-11-04)
 - **Runtime:** Python 3 (NVDA 2025.1+ required, tested up to NVDA 2026.1).
 - **Core Audio Backend (`core_audio.py`):** Pure Win32 Core Audio using standard `ctypes` and raw COM VTables:
   - `MMDeviceEnumerator`: audio endpoint enumeration (`getActiveDevices`) and default device queries (`getDefaultDeviceInfo`).
