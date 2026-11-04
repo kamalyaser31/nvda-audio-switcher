@@ -34,9 +34,11 @@ addon_info = AddonInfo(
     # Brief changelog for this version
     # Translators: what's new content for the add-on version to be shown in the add-on store
     addon_changelog=_(
-        "Added one-key toggling of NVDA's own audio output between the system default and a configured secondary device. "
-        "Added a secondary output selector to the settings panel and quick selection dialog, and a gesture to open the settings directly. "
-        "Saved devices are kept in settings while disconnected, and Arabic translations now load correctly. Requires NVDA 2025.1 or later."
+        "Added three profiles. A profile switches the speaker, the microphone "
+        "and NVDA's own output together with one key, and says only its name. "
+        "Set up profiles in the settings, where a button fills a profile with the "
+        "devices you use now. Choosing an NVDA device in the quick dialog now moves "
+        "NVDA speech to it right away."
     ),
     # Author(s)
     addon_author="Kamal Yaser <kamalyaser31@gmail.com>",
@@ -49,7 +51,7 @@ addon_info = AddonInfo(
     # Minimum NVDA version supported (e.g. "2019.3.0", minor version is optional)
     addon_minimumNVDAVersion="2025.1.0",
     # Last NVDA version supported/tested (e.g. "2024.4.0", ideally more recent than minimum version)
-    addon_lastTestedNVDAVersion="2026.1.0",
+    addon_lastTestedNVDAVersion="2026.2.0",
     # Add-on update channel (default is None, denoting stable releases,
     # and for development releases, use "dev".)
     # Do not change unless you know what you are doing!
