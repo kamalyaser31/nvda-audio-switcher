@@ -349,19 +349,29 @@ def _moveNvdaToChosen(secondaryDevice, success, failure):
     _moveNvdaOutput(matchedId, displayName, success, failure)
 
 
+def _isNvdaOnDevice(configValue):
+    if not configValue:
+        return False
+    targetId, targetName = parseDeviceConfig(configValue)
+    # Name-only values from old configs carry no ID, so resolve them first.
+    active = getActiveDevices(render=True)
+    matchedId = findMatchingDeviceId(active, targetId, targetName)
+    return getNvdaCurrentOutputDeviceId() in {targetId, matchedId} - {"", None}
+
+
 def _applySecondaryDevice(secondaryDevice, success, failure):
     """Save the secondary device and move NVDA speech to it at once."""
     if secondaryDevice is None:
         return
     cfg = config.conf["audioSwitcher"]
-    oldId, _oldName = parseDeviceConfig(cfg["nvdaSecondaryOutput"])
+    oldValue = cfg["nvdaSecondaryOutput"]
     cfg["nvdaSecondaryOutput"] = secondaryDevice
     if secondaryDevice:
         _moveNvdaToChosen(secondaryDevice, success, failure)
         return
     success.append(_("NVDA secondary device cleared"))
     # Leave NVDA where it is unless it was speaking on the device just cleared.
-    if oldId and getNvdaCurrentOutputDeviceId() == oldId:
+    if _isNvdaOnDevice(oldValue):
         primary = _("Primary Device (System Default)")
         _moveNvdaOutput("default", primary, success, failure)
 
@@ -628,19 +638,20 @@ def buildNvdaProfileChoices(playback, value):
 
 class AudioSwitcherSettingsPanel(SettingsPanel):
     title = _("Audio Switcher")
+    speakerLabels = (_("&Speaker 1:"), _("S&peaker 2:"), _("Sp&eaker 3:"))
+    micLabels = (_("&Microphone 1:"), _("M&icrophone 2:"), _("Mi&crophone 3:"))
 
     def makeSettings(self, settingsSizer):
         sHelper = gui.guiHelper.BoxSizerHelper(self, sizer=settingsSizer)
         playback = getActiveDevices(render=True)
         capture = getActiveDevices(render=False)
-        # (config key, wx.Choice, values) for every device control.
-        self.deviceControls = []
-        speakerLabels = (_("&Speaker 1:"), _("S&peaker 2:"), _("Sp&eaker 3:"))
-        micLabels = (_("&Microphone 1:"), _("M&icrophone 2:"), _("Mi&crophone 3:"))
+        self.deviceControls = []  # (config key, wx.Choice, values) per control.
         speakerEmpty = "" if playback else _("No connected speakers")
         micEmpty = "" if capture else _("No connected microphones")
-        self._addSlotControls(sHelper, "speaker", speakerLabels, playback, speakerEmpty)
-        self._addSlotControls(sHelper, "mic", micLabels, capture, micEmpty)
+        self._addSlotControls(
+            sHelper, "speaker", self.speakerLabels, playback, speakerEmpty
+        )
+        self._addSlotControls(sHelper, "mic", self.micLabels, capture, micEmpty)
         self._addDeviceControl(
             sHelper,
             "nvdaSecondaryOutput",
@@ -756,6 +767,9 @@ class AudioSwitcherSettingsPanel(SettingsPanel):
 
     def _onSaveCurrentDevices(self, event):
         self._storeProfileFields()
+        # A device may have been plugged in after the panel opened.
+        self.profilePlayback = getActiveDevices(render=True)
+        self.profileCapture = getActiveDevices(render=False)
         current = profiles.currentDevicesAsProfile(
             getDefaultDeviceInfo(render=True),
             getDefaultDeviceInfo(render=False),

@@ -71,7 +71,7 @@ the profile name.
   - Nvda is `""`, `"default"`, or `id|name`.
 - **Empty name**: the name falls back to "Profile {n}".
 - **Empty profile** (all three fields "No change"): announce
-  "Profile {name} is not configured" and change nothing.
+  "{name} is not configured" and change nothing.
 - **Apply order**: speaker, then microphone, then NVDA output. NVDA goes last
   because `safeSetNvdaOutputDevice` reloads the synth.
 - **Device matching**: reuse `findMatchingDeviceId` against `getActiveDevices`
