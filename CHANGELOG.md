@@ -2,6 +2,11 @@
 
 All notable changes to the Audio Switcher add-on will be documented in this file.
 
+## [Unreleased]
+
+### docs: root README
+- Added a root `README.md` written for beginners, which is now the source of the English help.
+
 ## [2026.5] - 2026-11-04
 
 ### feat: audio profiles

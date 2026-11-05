@@ -13,6 +13,7 @@ Audio Switcher is an NVDA screen reader add-on created by Kamal Yaser that sets 
   - `IPolicyConfigClient`: default audio endpoint selection across `eConsole`, `eMultimedia`, and `eCommunications` roles (`setDefaultDevice`).
   - `cycleNextDevice`: cyclic device progression with position tracking.
   - Explicit COM reference releasing (`IUnknown::Release`) for memory safety.
+- **Documentation:** root `README.md` is the source of the English help; `sconstruct` copies it to the git-ignored `addon/doc/en/readme.md`. Arabic help stays in `addon/doc/ar/readme.md`.
 - **UI & Integration (`__init__.py`):**
   - `GlobalPlugin`: NVDA scripts and gestures.
   - `AudioDeviceSelectionDialog`: wxPython quick selection dialog.

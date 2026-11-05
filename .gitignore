@@ -14,3 +14,6 @@ addon/doc/*/*.html
 addon/doc/style.css
 site_scons/site_tools/NVDATool/typings.py
 .sconsign.dblite
+
+# Copied from the root README.md by sconstruct at build time
+addon/doc/en/
